@@ -3,7 +3,13 @@
 # ~~~~
 
 # Home page
-GET     /                           com.mehmetakiftutuncu.muezzinapi.controllers.Application.index
+GET     /                                       com.mehmetakiftutuncu.muezzinapi.controllers.Application.index
+
+# Prayer times
+GET     /prayertimes/countries                  com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimes.getCountries
+GET     /prayertimes/cities/:country            com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimes.getCities(country)
+GET     /prayertimes/districts/:city            com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimes.getDistricts(city)
+GET     /prayertimes/:country/:city/:district   com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimes.getTimes(country, city, district)
 
 # Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
+GET     /assets/*file                           controllers.Assets.versioned(path="/public", file: Asset)

@@ -26,5 +26,5 @@ trait Jsonable[T <: MuezzinAPIModel] {
    *
    * @return Generated object or some errors
    */
-  def fromJson(json: JsValue): Either[T, Errors]
+  def fromJson(json: JsValue): Either[Errors, T]
 }

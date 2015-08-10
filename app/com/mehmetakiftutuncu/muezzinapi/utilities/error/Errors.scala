@@ -1,6 +1,5 @@
 package com.mehmetakiftutuncu.muezzinapi.utilities.error
 
-import com.mehmetakiftutuncu.muezzinapi.models.base.EnumBase
 import play.api.libs.json.{JsValue, Json}
 
 /**
@@ -59,35 +58,7 @@ case class Errors(errors: Set[ErrorBase] = Set.empty[ErrorBase]) {
   override def toString: String = toJson.toString()
 }
 
-/**
- * An enumeration of errors
- */
-object Errors extends EnumBase[ErrorBase] {
-  /** The error that something is not found */
-  case object NotFound extends SingleError("notFound")
-
-  /** The error that some data was invalid */
-  case object InvalidData extends SingleError("invalidData")
-
-  /** The error that some exception occurred */
-  case object Exception extends SingleError("exception")
-
-  /** The error that some database error occurred */
-  case object Database extends SingleError("database")
-
-  /** The error that some external request failed */
-  case object RequestFailed extends SingleError("requestFailed")
-
-  override val values: Set[ErrorBase] = Set(
-    NotFound,
-    InvalidData,
-    Exception,
-    Database,
-    RequestFailed
-  )
-
-  override def toName(error: ErrorBase): String = error.name
-
+object Errors {
   /**
    * Creates new instance with given errors
    *

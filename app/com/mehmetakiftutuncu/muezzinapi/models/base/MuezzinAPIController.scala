@@ -1,9 +1,9 @@
 package com.mehmetakiftutuncu.muezzinapi.models.base
 
 import com.mehmetakiftutuncu.muezzinapi.utilities.error.Errors
-import play.api.http.MimeTypes
+import play.api.http.ContentTypes
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{Controller, Result}
+import play.api.mvc.{Codec, Controller, Result}
 
 import scala.concurrent.Future
 
@@ -28,7 +28,7 @@ trait MuezzinAPIController extends Controller {
    * @return A response with given data
    */
   def jsonResponse(result: JsValue): Result = {
-    Ok(result).as(MimeTypes.JSON)
+    Ok(result).as(ContentTypes.JSON(Codec.utf_8))
   }
 
   /**
@@ -50,6 +50,6 @@ trait MuezzinAPIController extends Controller {
    * @return A response with given errors
    */
   def errorResponse(errors: Errors): Result = {
-    InternalServerError(Json.obj("errors" -> errors.toJson)).as(MimeTypes.JSON)
+    InternalServerError(Json.obj("errors" -> errors.toJson)).as(ContentTypes.JSON(Codec.utf_8))
   }
 }
