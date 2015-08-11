@@ -9,7 +9,7 @@ import scala.concurrent.Future
 
 object CountryExtractor {
   def extractCountries(): Future[Either[Errors, List[Country]]] = {
-    Web.getForHtml(Conf.Url.worldPrayerTimes) map {
+    Web.getForHtml(Conf.Url.countries) map {
       case Left(getPageErrors) =>
         Left(getPageErrors)
 

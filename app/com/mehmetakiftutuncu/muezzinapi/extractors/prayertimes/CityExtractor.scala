@@ -11,7 +11,7 @@ import scala.util.Try
 
 object CityExtractor {
   def extractCities(country: Int): Future[Either[Errors, List[City]]] = {
-    Web.getForJson(Conf.Url.citiesWithCountry.format(country)) map {
+    Web.getForJson(Conf.Url.cities.format(country)) map {
       case Left(getPageErrors) =>
         Left(getPageErrors)
 
