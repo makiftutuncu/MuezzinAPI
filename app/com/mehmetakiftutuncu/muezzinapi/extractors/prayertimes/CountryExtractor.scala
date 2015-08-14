@@ -38,10 +38,12 @@ object CountryExtractor {
       } else {
         val countryList = countryOptions map {
           countryOption =>
-            val id   = countryOption.group(1).toInt
-            val name = Utils.sanitizeHtml(countryOption.group(2))
+            val id       = countryOption.group(1).toInt
+            val htmlName = Utils.sanitizeHtml(countryOption.group(2))
+            val name     = Country.countryIdToNameMap.getOrElse(id, htmlName)
+            val trName   = Country.countryIdToTurkishNameMap.getOrElse(id, htmlName)
 
-            Country(id, name)
+            Country(id, name, trName)
         }
 
         val sortedCountryList = countryList.sortBy(_.name)

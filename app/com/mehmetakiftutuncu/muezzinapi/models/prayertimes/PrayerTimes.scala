@@ -2,8 +2,8 @@ package com.mehmetakiftutuncu.muezzinapi.models.prayertimes
 
 import com.mehmetakiftutuncu.muezzinapi.models.base.{Jsonable, MuezzinAPIModel}
 import com.mehmetakiftutuncu.muezzinapi.utilities.Log
-import com.mehmetakiftutuncu.muezzinapi.utilities.error.{SingleError, Errors}
-import org.joda.time.{DateTimeZone, DateTime}
+import com.mehmetakiftutuncu.muezzinapi.utilities.error.{Errors, SingleError}
+import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.json.{JsValue, Json}
 
 case class PrayerTimes(date: DateTime,

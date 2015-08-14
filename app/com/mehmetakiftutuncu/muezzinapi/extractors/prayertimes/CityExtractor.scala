@@ -35,8 +35,9 @@ object CityExtractor {
       } else {
         val cities = citiesJs map {
           cityJs =>
-            val id   = (cityJs \ "Value").as[String].toInt
-            val name = Utils.sanitizeHtml((cityJs \ "Text").as[String])
+            val id       = (cityJs \ "Value").as[String].toInt
+            val htmlName = Utils.sanitizeHtml((cityJs \ "Text").as[String])
+            val name     = City.cityIdToTurkishNameMap.getOrElse(id, htmlName)
 
             City(id, name)
         }

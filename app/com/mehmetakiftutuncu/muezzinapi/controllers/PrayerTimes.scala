@@ -1,6 +1,6 @@
 package com.mehmetakiftutuncu.muezzinapi.controllers
 
-import com.mehmetakiftutuncu.muezzinapi.extractors.prayertimes.{PrayerTimesExtractor, CityExtractor, CountryExtractor, DistrictExtractor}
+import com.mehmetakiftutuncu.muezzinapi.extractors.prayertimes.{CityExtractor, CountryExtractor, DistrictExtractor, PrayerTimesExtractor}
 import com.mehmetakiftutuncu.muezzinapi.models.base.MuezzinAPIController
 import com.mehmetakiftutuncu.muezzinapi.models.prayertimes.{City, Country, District}
 import com.mehmetakiftutuncu.muezzinapi.utilities.Log
