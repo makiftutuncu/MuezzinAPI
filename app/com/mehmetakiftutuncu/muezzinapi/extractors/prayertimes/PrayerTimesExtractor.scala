@@ -12,30 +12,30 @@ object PrayerTimesExtractor {
   val dateRegex = """^(\d{2})\.(\d{2})\.(\d{4})$""".r
   val timeRegex = """^(\d{2}):(\d{2})$""".r
 
-  def extractPrayerTimes(country: Int, city: Int, district: Int): Future[Either[Errors, List[PrayerTimes]]] = {
+  def extractPrayerTimes(countryId: Int, cityId: Int, districtId: Option[Int]): Future[Either[Errors, List[PrayerTimes]]] = {
     Web.postForHtml(Conf.Url.prayerTimes,
                     Map(
-                      "Country" -> Seq(country.toString),
-                      "State" -> Seq(city.toString),
-                      "City" -> Seq(district.toString),
+                      "Country" -> Seq(countryId.toString),
+                      "State" -> Seq(cityId.toString),
+                      "City" -> Seq(districtId.getOrElse(0).toString),
                       "period" -> Seq("Aylik")
                     )) map {
       case Left(getPageErrors) =>
         Left(getPageErrors)
 
       case Right(prayerTimesPage) =>
-        parsePrayerTimes(prayerTimesPage)
+        parsePrayerTimes(countryId, cityId, districtId, prayerTimesPage)
     }
   }
 
-  private def parsePrayerTimes(page: String): Either[Errors, List[PrayerTimes]] = {
+  private def parsePrayerTimes(countryId: Int, cityId: Int, districtId: Option[Int], page: String): Either[Errors, List[PrayerTimes]] = {
     val prayerTimesTableRegex = """[\s\S]+<table.+?>([\s\S]+?)<\/table>[\s\S]+""".r
     val prayerTimesRowRegex   = """[\s\S]*?<tr>\s*?<td.+?>(.+?)</td>\s*?<td.+?>(.+?)</td>\s*?<td.+?>(.+?)</td>\s*?<td.+?>(.+?)</td>\s*?<td.+?>(.+?)</td>\s*?<td.+?>(.+?)</td>\s*?<td.+?>(.+?)</td>\s*?<td.+?>(.+?)</td>\s*?</tr>[\s\S]*?""".r
 
     val prayerTimesTableMatchAsOpt = prayerTimesTableRegex.findFirstMatchIn(page)
 
     if (prayerTimesTableMatchAsOpt.isEmpty || prayerTimesTableMatchAsOpt.get.groupCount < 1) {
-      Log.error("Failed to parse prayer times. Prayer times are not found in page: " + page, "PrayerTimesExtractor")
+      Log.error(s"""Failed to parse prayer times for country "$countryId", city "$cityId" and district id "$districtId". Prayer times are not found in $page""", "PrayerTimesExtractor")
       Left(Errors(SingleError.RequestFailed.withDetails("Prayer times are not found in page.")))
     } else {
       val prayerTimesTable = prayerTimesTableMatchAsOpt.get.group(1)
@@ -43,12 +43,12 @@ object PrayerTimesExtractor {
       val prayerTimesRows = prayerTimesRowRegex.findAllMatchIn(prayerTimesTable).toList
 
       if (prayerTimesRows.isEmpty || prayerTimesRows.exists(m => m.groupCount < 8)) {
-        Log.error("Failed to parse prayer times. Found some invalid prayer times in page: " + page, "PrayerTimesExtractor")
+        Log.error(s"""Failed to parse prayer times for country "$countryId", city "$cityId" and district id "$districtId". Found some invalid prayer times in $page""", "PrayerTimesExtractor")
         Left(Errors(SingleError.InvalidData.withDetails("Invalid prayer times are not found in page.")))
       } else {
         val prayerTimes = prayerTimesRows map {
           prayerTimesRow =>
-            val dateString    = prayerTimesRow.group(1)
+            val dayDateString = prayerTimesRow.group(1)
             val fajrString    = prayerTimesRow.group(2)
             val shuruqString  = prayerTimesRow.group(3)
             val dhuhrString   = prayerTimesRow.group(4)
@@ -57,19 +57,19 @@ object PrayerTimesExtractor {
             val ishaString    = prayerTimesRow.group(7)
             val qiblaString   = prayerTimesRow.group(8)
 
-            val date    = getDate(dateString)
-            val fajr    = getTime(date, fajrString)
-            val shuruq  = getTime(date, shuruqString)
-            val dhuhr   = getTime(date, dhuhrString)
-            val asr     = getTime(date, asrString)
-            val maghrib = getTime(date, maghribString)
-            val isha    = getTime(date, ishaString)
-            val qibla   = getTime(date, qiblaString)
+            val dayDate = getDate(dayDateString)
+            val fajr    = getTime(dayDate, fajrString)
+            val shuruq  = getTime(dayDate, shuruqString)
+            val dhuhr   = getTime(dayDate, dhuhrString)
+            val asr     = getTime(dayDate, asrString)
+            val maghrib = getTime(dayDate, maghribString)
+            val isha    = getTime(dayDate, ishaString)
+            val qibla   = getTime(dayDate, qiblaString)
 
-            PrayerTimes(date, fajr, shuruq, dhuhr, asr, maghrib, isha, qibla)
+            PrayerTimes(countryId, cityId, districtId, dayDate, fajr, shuruq, dhuhr, asr, maghrib, isha, qibla)
         }
 
-        val sortedPrayerTimes = prayerTimes.sortBy(_.date.getMillis)
+        val sortedPrayerTimes = prayerTimes.sortBy(_.dayDate.getMillis)
 
         Right(sortedPrayerTimes)
       }

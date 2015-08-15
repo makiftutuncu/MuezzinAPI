@@ -17,4 +17,19 @@ CREATE TABLE District (
     name   VARCHAR(128) NOT NULL
 ) DEFAULT CHARSET=utf8;
 
+CREATE TABLE PrayerTimes (
+    countryId  SMALLINT NOT NULL,
+    cityId     SMALLINT NOT NULL,
+    districtId SMALLINT,
+    dayDate    BIGINT NOT NULL,
+    fajr       BIGINT NOT NULL,
+    shuruq     BIGINT NOT NULL,
+    dhuhr      BIGINT NOT NULL,
+    asr        BIGINT NOT NULL,
+    maghrib    BIGINT NOT NULL,
+    isha       BIGINT NOT NULL,
+    qibla      BIGINT NOT NULL,
+    UNIQUE (countryId, cityId, districtId, dayDate)
+) DEFAULT CHARSET=utf8;
+
 # --- !Downs

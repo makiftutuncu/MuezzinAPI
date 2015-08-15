@@ -22,7 +22,7 @@ object Country {
    * @return Some errors or a list of countries
    */
   def getAllFromDatabase: Either[Errors, List[Country]] = {
-    Log.debug(s"""Getting all countries from database...""")
+    Log.debug(s"""Getting all countries from database...""", "Country")
 
     try {
       val sql = anorm.SQL("SELECT * FROM Country ORDER BY name")
@@ -56,7 +56,7 @@ object Country {
       Log.warn("Not saving empty list of countries...", "Country")
       Errors.empty
     } else {
-      Log.debug(s"""Saving all countries to database...""")
+      Log.debug(s"""Saving all countries to database...""", "Country")
 
       try {
         val valuesToParameters: List[(String, List[NamedParameter])] = countries.zipWithIndex.foldLeft(List.empty[(String, List[NamedParameter])]) {

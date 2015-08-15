@@ -19,7 +19,7 @@ object CountryExtractor {
   }
 
   private def parseCountries(page: String): Either[Errors, List[Country]] = {
-    Log.debug(s"""Parsing countries...""")
+    Log.debug(s"""Parsing countries...""", "CountryExtractor")
 
     val countriesSelectRegex = """[\s\S]+<select.+?id="Country".+?>([\s\S]+?)<\/select>[\s\S]+""".r
     val countryOptionRegex   = """[\s\S]*?<option.+?value="(\d+)".*?>(.+?)<\/option>[\s\S]*?""".r

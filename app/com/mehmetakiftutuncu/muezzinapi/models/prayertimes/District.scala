@@ -19,10 +19,12 @@ object District extends  {
   /**
    * Gets all districts from database
    *
+   * @param cityId Id of the city for which to get districts
+   *
    * @return Some errors or a list of districts
    */
   def getAllFromDatabase(cityId: Int): Either[Errors, List[District]] = {
-    Log.debug(s"""Getting all districts for city "$cityId" from database...""")
+    Log.debug(s"""Getting all districts for city "$cityId" from database...""", "District")
 
     try {
       val sql = anorm.SQL("SELECT * FROM District WHERE cityId = {cityId} ORDER BY name").on("cityId" -> cityId)
@@ -30,7 +32,6 @@ object District extends  {
       val districtList = Database.apply(sql) map {
         row =>
           val id: Int      = row[Int]("id")
-          val cityId: Int  = row[Int]("cityId")
           val name: String = row[String]("name")
 
           District(id, cityId, name)
@@ -57,7 +58,7 @@ object District extends  {
         Log.warn("Not saving empty list of districts...", "District")
         Errors.empty
       } else {
-        Log.debug(s"""Saving all districts to database...""")
+        Log.debug(s"""Saving all districts to database...""", "District")
 
         val valuesToParameters: List[(String, List[NamedParameter])] = districts.zipWithIndex.foldLeft(List.empty[(String, List[NamedParameter])]) {
           case (valuesToParameters: List[(String, List[NamedParameter])], (district: District, index: Int)) =>

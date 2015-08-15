@@ -25,7 +25,7 @@ object Data {
    * @return Requested data or some errors
    */
   def get[T](key: String, ttl: FiniteDuration = Conf.cacheTTL)(dbBlock: => Either[Errors, T]): Either[Errors, T] = {
-    Log.debug(s"""Getting from cache with key "$key"...""")
+    Log.debug(s"""Getting from cache with key "$key"...""", "Data")
 
     // Check cache
     val fromCacheAsOpt: Option[T] = Cache.get(key) flatMap {
@@ -41,7 +41,7 @@ object Data {
       val dbBlockResult = dbBlock
 
       if (dbBlockResult.isRight) {
-        Log.debug(s"""Saving to cache with key "$key" after finding it on database...""")
+        Log.debug(s"""Saving to cache with key "$key" after finding it on database...""", "Data")
 
         Cache.set(key, dbBlockResult.right.get, ttl)
       }
@@ -67,7 +67,7 @@ object Data {
     val dbErrors: Errors = dbBlock
 
     if (!dbErrors.hasErrors) {
-      Log.debug(s"""Saving to cache with key "$key"...""")
+      Log.debug(s"""Saving to cache with key "$key"...""", "Data")
 
       // Successfully saved to DB, set to cache
       Cache.set(key, obj, ttl)

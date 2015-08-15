@@ -19,18 +19,20 @@ object City {
   /**
    * Gets all cities from database
    *
+   * @param countryId Id of the country for which to get cities
+   *
    * @return Some errors or a list of cities
    */
   def getAllFromDatabase(countryId: Int): Either[Errors, List[City]] = {
-    Log.debug(s"""Getting all cities for country "$countryId" from database...""")
+    Log.debug(s"""Getting all cities for country "$countryId" from database...""", "City")
 
     try {
       val sql = anorm.SQL("SELECT * FROM City WHERE countryId = {countryId} ORDER BY name").on("countryId" -> countryId)
 
       val cityList = Database.apply(sql) map {
         row =>
-          val id: Int        = row[Int]("id")
-          val name: String   = row[String]("name")
+          val id: Int      = row[Int]("id")
+          val name: String = row[String]("name")
 
           City(id, countryId, name)
       }
@@ -56,7 +58,7 @@ object City {
         Log.warn("Not saving empty list of cities...", "City")
         Errors.empty
       } else {
-        Log.debug(s"""Saving all cities to database...""")
+        Log.debug(s"""Saving all cities to database...""", "City")
 
         val valuesToParameters: List[(String, List[NamedParameter])] = cities.zipWithIndex.foldLeft(List.empty[(String, List[NamedParameter])]) {
           case (valuesToParameters: List[(String, List[NamedParameter])], (city: City, index: Int)) =>

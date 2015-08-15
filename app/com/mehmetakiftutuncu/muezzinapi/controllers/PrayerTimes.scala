@@ -3,7 +3,7 @@ package com.mehmetakiftutuncu.muezzinapi.controllers
 import com.mehmetakiftutuncu.muezzinapi.extractors.prayertimes.{CityExtractor, CountryExtractor, DistrictExtractor, PrayerTimesExtractor}
 import com.mehmetakiftutuncu.muezzinapi.models.Data
 import com.mehmetakiftutuncu.muezzinapi.models.base.MuezzinAPIController
-import com.mehmetakiftutuncu.muezzinapi.models.prayertimes.{City, Country, District}
+import com.mehmetakiftutuncu.muezzinapi.models.prayertimes.{City, Country, District, PrayerTimes => PrayerTimesModel}
 import com.mehmetakiftutuncu.muezzinapi.utilities.Log
 import com.mehmetakiftutuncu.muezzinapi.utilities.error.{Errors, SingleError}
 import play.api.libs.json.{JsValue, Json}
@@ -146,6 +146,15 @@ object PrayerTimes extends MuezzinAPIController {
   }
 
   def getTimes(country: String, city: String, district: String) = Action.async {
+    def getResult(countryId: Int, cityId: Int, districtId: Option[Int], prayerTimesList: List[PrayerTimesModel]): JsValue = {
+      Json.obj(
+        "country"  -> countryId,
+        "city"     -> cityId,
+        "district" -> districtId,
+        "times"    -> Json.toJson(prayerTimesList.map(_.toJson))
+      )
+    }
+
     val countryIdAsOpt = Try(country.toInt).toOption
 
     if (countryIdAsOpt.isEmpty) {
@@ -162,25 +171,42 @@ object PrayerTimes extends MuezzinAPIController {
       } else {
         val cityId: Int = cityIdAsOpt.get
 
-        val districtIdAsOpt = Try(district.toInt).toOption
+        val districtId = Try(district.toInt).toOption
 
-        if (districtIdAsOpt.isEmpty) {
-          Log.error(s"""Failed to get prayer times for country "$country", city "$city" and district "$district", district id is invalid!""", "PrayerTimes")
-          futureErrorResponse(Errors(SingleError.InvalidData.withValue(district).withDetails("District id is invalid.")))
+        val key = s"prayertimes.$countryId.$cityId.$districtId"
+
+        val errorsOrPrayerTimesList = Data.get[List[PrayerTimesModel]](key) {
+          PrayerTimesModel.getAllFromDatabase(countryId, cityId, districtId)
+        }
+
+        if (errorsOrPrayerTimesList.isLeft) {
+          futureErrorResponse(errorsOrPrayerTimesList.left.get)
         } else {
-          val districtId: Int = districtIdAsOpt.get
+          val prayerTimesList = errorsOrPrayerTimesList.right.get
 
-          PrayerTimesExtractor.extractPrayerTimes(countryId, cityId, districtId) map {
-            case Left(errors)       => errorResponse(errors)
-            case Right(prayerTimes) => jsonResponse(Json.obj(
-              "country"  -> countryId,
-              "city"     -> cityId,
-              "district" -> districtId,
-              "times"    -> Json.toJson(prayerTimes.map(_.toJson))
-            ))
+          if (prayerTimesList.nonEmpty) {
+            futureJsonResponse(getResult(countryId, cityId, districtId, prayerTimesList))
+          } else {
+            PrayerTimesExtractor.extractPrayerTimes(countryId, cityId, districtId) map {
+              case Left(extractErrors) =>
+                errorResponse(extractErrors)
+
+              case Right(extractedPrayerTimesList) =>
+                val saveErrors = Data.save[List[PrayerTimesModel]](key, extractedPrayerTimesList) {
+                  PrayerTimesModel.saveAllToDatabase(extractedPrayerTimesList)
+                }
+
+                if (saveErrors.hasErrors) {
+                  errorResponse(saveErrors)
+                } else {
+                  jsonResponse(getResult(countryId, cityId, districtId, extractedPrayerTimesList))
+                }
+            }
           }
         }
       }
     }
   }
+
+  def getTimesWithoutDistrict(country: String, city: String) = getTimes(country, city, "")
 }
