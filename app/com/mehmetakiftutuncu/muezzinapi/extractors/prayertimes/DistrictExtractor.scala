@@ -10,27 +10,27 @@ import scala.concurrent.Future
 import scala.util.Try
 
 object DistrictExtractor {
-   def extractCities(city: Int): Future[Either[Errors, List[District]]] = {
-     Web.getForJson(Conf.Url.districts.format(city)) map {
+   def extractDistricts(cityId: Int): Future[Either[Errors, List[District]]] = {
+     Web.getForJson(Conf.Url.districts.format(cityId)) map {
        case Left(getPageErrors) =>
          Left(getPageErrors)
 
        case Right(districtsPage) =>
-         parseDistricts(districtsPage)
+         parseDistricts(cityId, districtsPage)
      }
    }
 
-   private def parseDistricts(page: JsValue): Either[Errors, List[District]] = {
+   private def parseDistricts(cityId: Int, page: JsValue): Either[Errors, List[District]] = {
      val districtsJsonAsOpt = page.asOpt[JsArray]
 
      if (districtsJsonAsOpt.isEmpty) {
-       Log.error(s"""Failed to parse districts. Page has invalid format: $page""", "DistrictExtractor")
+       Log.error(s"""Failed to parse districts for city "$cityId". Page has invalid format: $page""", "DistrictExtractor")
        Left(Errors(SingleError.InvalidData.withDetails("Districts page have invalid format.")))
      } else {
        val districtsJs = districtsJsonAsOpt.get.value.toList
 
        if (districtsJs.exists(j => (j \ "Text").asOpt[String].isEmpty || (j \ "Value").asOpt[String].flatMap(s => Try(s.toInt).toOption).isEmpty)) {
-         Log.error(s"""Failed to parse districts. Found some invalid districts in page: $page""", "DistrictExtractor")
+         Log.error(s"""Failed to parse districts for city "$cityId". Found some invalid districts in page: $page""", "DistrictExtractor")
          Left(Errors(SingleError.InvalidData.withDetails("Invalid districts are found in page.")))
        } else {
          val districts = districtsJs map {
@@ -38,7 +38,7 @@ object DistrictExtractor {
              val id   = (districtJs \ "Value").as[String].toInt
              val name = Utils.sanitizeHtml((districtJs \ "Text").as[String])
 
-             District(id, name)
+             District(id, cityId, name)
          }
 
          val sortedDistricts = districts.sortBy(_.name)

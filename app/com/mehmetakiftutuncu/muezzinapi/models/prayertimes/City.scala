@@ -1,44 +1,98 @@
 package com.mehmetakiftutuncu.muezzinapi.models.prayertimes
 
+import anorm.NamedParameter
 import com.mehmetakiftutuncu.muezzinapi.models.base.{Jsonable, MuezzinAPIModel}
-import com.mehmetakiftutuncu.muezzinapi.utilities.Log
 import com.mehmetakiftutuncu.muezzinapi.utilities.error.{Errors, SingleError}
+import com.mehmetakiftutuncu.muezzinapi.utilities.{Database, Log}
 import play.api.libs.json.{JsValue, Json}
 
-case class City(id: Int, name: String) extends MuezzinAPIModel
-
-object City extends Jsonable[City] {
+case class City(id: Int, countryId: Int, name: String) extends MuezzinAPIModel with Jsonable[City] {
   /**
-   * Converts given object to Json
+   * Converts this object to Json
    *
-   * @param city Object that will be converted to Json
-   *
-   * @return Json representation of given object
+   * @return Json representation of this object
    */
-  override def toJson(city: City): JsValue = {
-    Json.obj(
-      "id"   -> city.id,
-      "name" -> city.name
-    )
+  override def toJson: JsValue = Json.obj("id" -> id, "name" -> name)
+}
+
+object City {
+  /**
+   * Gets all cities from database
+   *
+   * @return Some errors or a list of cities
+   */
+  def getAllFromDatabase(countryId: Int): Either[Errors, List[City]] = {
+    Log.debug(s"""Getting all cities for country "$countryId" from database...""")
+
+    try {
+      val sql = anorm.SQL("SELECT * FROM City WHERE countryId = {countryId} ORDER BY name").on("countryId" -> countryId)
+
+      val cityList = Database.apply(sql) map {
+        row =>
+          val id: Int        = row[Int]("id")
+          val name: String   = row[String]("name")
+
+          City(id, countryId, name)
+      }
+
+      Right(cityList)
+    } catch {
+      case t: Throwable =>
+        Log.throwable(t, s"""Failed to get all cities for country "$countryId" from database!""", "City")
+        Left(Errors(SingleError.Database.withDetails(s"""Failed to get all cities for country "$countryId" from database!""")))
+    }
   }
 
   /**
-   * Tries to convert given Json to an object of current type
+   * Saves given cities to database
    *
-   * @param json Json from which object will be generated
+   * @param cities Cities to save to database
    *
-   * @return Generated object or some errors
+   * @return Non-empty errors if something goes wrong
    */
-  override def fromJson(json: JsValue): Either[Errors, City] = {
+  def saveAllToDatabase(cities: List[City]): Errors = {
     try {
-      val id: Int      = (json \ "id").as[Int]
-      val name: String = (json \ "name").as[String]
+      if (cities.isEmpty) {
+        Log.warn("Not saving empty list of cities...", "City")
+        Errors.empty
+      } else {
+        Log.debug(s"""Saving all cities to database...""")
 
-      Right(City(id, name))
+        val valuesToParameters: List[(String, List[NamedParameter])] = cities.zipWithIndex.foldLeft(List.empty[(String, List[NamedParameter])]) {
+          case (valuesToParameters: List[(String, List[NamedParameter])], (city: City, index: Int)) =>
+            val idKey: String        = s"id$index"
+            val countryIdKey: String = s"countryId$index"
+            val nameKey: String      = s"name$index"
+
+            valuesToParameters :+ {
+              s"({$idKey}, {$countryIdKey}, {$nameKey})" -> List(
+                NamedParameter(idKey,        city.id),
+                NamedParameter(countryIdKey, city.countryId),
+                NamedParameter(nameKey,      city.name)
+              )
+            }
+        }
+
+        val sql = anorm.SQL(
+          s"""
+             |INSERT INTO City (id, countryId, name)
+             |VALUES ${valuesToParameters.map(_._1).mkString(", ")}
+           """.stripMargin
+          ).on(valuesToParameters.flatMap(_._2):_*)
+
+        val savedCount = Database.executeUpdate(sql)
+
+        if (savedCount != cities.size) {
+          Log.error(s"""Failed to save ${cities.size} cities to database, affected row count was $savedCount!""", "City")
+          Errors(SingleError.Database.withDetails("Failed to save some cities to database!"))
+        } else {
+          Errors.empty
+        }
+      }
     } catch {
       case t: Throwable =>
-        Log.throwable(t, s"""Failed to convert "$json" to a city!""", "City")
-        Left(Errors(SingleError.InvalidData.withValue(json.toString()).withDetails("Invalid city Json!")))
+        Log.throwable(t, s"""Failed to save ${cities.size} cities to database!""", "City")
+        Errors(SingleError.Database.withDetails("Failed to save all cities to database!"))
     }
   }
 

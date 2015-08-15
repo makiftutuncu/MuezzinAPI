@@ -10,27 +10,27 @@ import scala.concurrent.Future
 import scala.util.Try
 
 object CityExtractor {
-  def extractCities(country: Int): Future[Either[Errors, List[City]]] = {
-    Web.getForJson(Conf.Url.cities.format(country)) map {
+  def extractCities(countryId: Int): Future[Either[Errors, List[City]]] = {
+    Web.getForJson(Conf.Url.cities.format(countryId)) map {
       case Left(getPageErrors) =>
         Left(getPageErrors)
 
       case Right(citiesPage) =>
-        parseCities(citiesPage)
+        parseCities(countryId, citiesPage)
     }
   }
 
-  private def parseCities(page: JsValue): Either[Errors, List[City]] = {
+  private def parseCities(countryId: Int, page: JsValue): Either[Errors, List[City]] = {
     val citiesJsonAsOpt = page.asOpt[JsArray]
 
     if (citiesJsonAsOpt.isEmpty) {
-      Log.error(s"""Failed to parse cities. Page has invalid format: $page""", "CityExtractor")
+      Log.error(s"""Failed to parse cities for country "$countryId". Page has invalid format: $page""", "CityExtractor")
       Left(Errors(SingleError.InvalidData.withDetails("Cities page have invalid format.")))
     } else {
       val citiesJs = citiesJsonAsOpt.get.value.toList
 
       if (citiesJs.exists(j => (j \ "Text").asOpt[String].isEmpty || (j \ "Value").asOpt[String].flatMap(s => Try(s.toInt).toOption).isEmpty)) {
-        Log.error(s"""Failed to parse cities. Found some invalid cities in page: $page""", "CityExtractor")
+        Log.error(s"""Failed to parse cities for country "$countryId". Found some invalid cities in page: $page""", "CityExtractor")
         Left(Errors(SingleError.InvalidData.withDetails("Invalid cities are found in page.")))
       } else {
         val cities = citiesJs map {
@@ -39,7 +39,7 @@ object CityExtractor {
             val htmlName = Utils.sanitizeHtml((cityJs \ "Text").as[String])
             val name     = City.cityIdToTurkishNameMap.getOrElse(id, htmlName)
 
-            City(id, name)
+            City(id, countryId, name)
         }
 
         val sortedCities = cities.sortBy(_.name)

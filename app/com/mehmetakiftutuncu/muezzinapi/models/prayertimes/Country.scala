@@ -1,56 +1,27 @@
 package com.mehmetakiftutuncu.muezzinapi.models.prayertimes
 
 import anorm.NamedParameter
-import com.mehmetakiftutuncu.muezzinapi.models.base.{Databaseable, Jsonable, MuezzinAPIModel}
+import com.mehmetakiftutuncu.muezzinapi.models.base.{Jsonable, MuezzinAPIModel}
 import com.mehmetakiftutuncu.muezzinapi.utilities.error.{Errors, SingleError}
 import com.mehmetakiftutuncu.muezzinapi.utilities.{Database, Log}
 import play.api.libs.json.{JsValue, Json}
 
-case class Country(id: Int, name: String, trName: String) extends MuezzinAPIModel
-
-object Country extends Jsonable[Country] with Databaseable[Country] {
+case class Country(id: Int, name: String, trName: String) extends MuezzinAPIModel with Jsonable[Country] {
   /**
-   * Converts given object to Json
+   * Converts this object to Json
    *
-   * @param country Object that will be converted to Json
-   *
-   * @return Json representation of given object
+   * @return Json representation of this object
    */
-  override def toJson(country: Country): JsValue = {
-    Json.obj(
-      "id"     -> country.id,
-      "name"   -> country.name,
-      "trName" -> country.trName
-    )
-  }
+  override def toJson: JsValue = Json.obj("id" -> id, "name" -> name, "trName" -> trName)
+}
 
-  /**
-   * Tries to convert given Json to an object of current type
-   *
-   * @param json Json from which object will be generated
-   *
-   * @return Generated object or some errors
-   */
-  override def fromJson(json: JsValue): Either[Errors, Country] = {
-    try {
-      val id: Int        = (json \ "id").as[Int]
-      val name: String   = (json \ "name").as[String]
-      val trName: String = (json \ "trName").as[String]
-
-      Right(Country(id, name, trName))
-    } catch {
-      case t: Throwable =>
-        Log.throwable(t, s"""Failed to convert "$json" to a country!""", "Country")
-        Left(Errors(SingleError.InvalidData.withValue(json.toString()).withDetails("Invalid country Json!")))
-    }
-  }
-
+object Country {
   /**
    * Gets all countries from database
    *
    * @return Some errors or a list of countries
    */
-  override def getAllFromDatabase: Either[Errors, List[Country]] = {
+  def getAllFromDatabase: Either[Errors, List[Country]] = {
     Log.debug(s"""Getting all countries from database...""")
 
     try {
@@ -80,44 +51,49 @@ object Country extends Jsonable[Country] with Databaseable[Country] {
    *
    * @return Non-empty errors if something goes wrong
    */
-  override def saveAllToDatabase(countries: List[Country]): Errors = {
-    Log.debug(s"""Saving all countries to database...""")
+  def saveAllToDatabase(countries: List[Country]): Errors = {
+    if (countries.isEmpty) {
+      Log.warn("Not saving empty list of countries...", "Country")
+      Errors.empty
+    } else {
+      Log.debug(s"""Saving all countries to database...""")
 
-    try {
-      val valuesToParameters: List[(String, List[NamedParameter])] = countries.zipWithIndex.foldLeft(List.empty[(String, List[NamedParameter])]) {
-        case (valuesToParameters: List[(String, List[NamedParameter])], (country: Country, index: Int)) =>
-          val idKey: String     = s"id$index"
-          val nameKey: String   = s"name$index"
-          val trNameKey: String = s"trName$index"
+      try {
+        val valuesToParameters: List[(String, List[NamedParameter])] = countries.zipWithIndex.foldLeft(List.empty[(String, List[NamedParameter])]) {
+          case (valuesToParameters: List[(String, List[NamedParameter])], (country: Country, index: Int)) =>
+            val idKey: String     = s"id$index"
+            val nameKey: String   = s"name$index"
+            val trNameKey: String = s"trName$index"
 
-          valuesToParameters :+ {
-            s"({$idKey}, {$nameKey}, {$trNameKey})" -> List(
-              NamedParameter(idKey,     country.id),
-              NamedParameter(nameKey,   country.name),
-              NamedParameter(trNameKey, country.trName)
-            )
-          }
+            valuesToParameters :+ {
+              s"({$idKey}, {$nameKey}, {$trNameKey})" -> List(
+                NamedParameter(idKey,     country.id),
+                NamedParameter(nameKey,   country.name),
+                NamedParameter(trNameKey, country.trName)
+              )
+            }
+        }
+
+        val sql = anorm.SQL(
+          s"""
+             |INSERT INTO Country (id, name, trName)
+             |VALUES ${valuesToParameters.map(_._1).mkString(", ")}
+          """.stripMargin
+        ).on(valuesToParameters.flatMap(_._2):_*)
+
+        val savedCount = Database.executeUpdate(sql)
+
+        if (savedCount != countries.size) {
+          Log.error(s"""Failed to save ${countries.size} countries to database, affected row count was $savedCount!""", "Country")
+          Errors(SingleError.Database.withDetails("Failed to save some countries to database!"))
+        } else {
+          Errors.empty
+        }
+      } catch {
+        case t: Throwable =>
+          Log.throwable(t, s"""Failed to save ${countries.size} countries to database!""", "Country")
+          Errors(SingleError.Database.withDetails("Failed to save all countries to database!"))
       }
-
-      val sql = anorm.SQL(
-        s"""
-           |INSERT INTO Country (id, name, trName)
-           |VALUES ${valuesToParameters.map(_._1).mkString(", ")}
-       """.stripMargin
-      ).on(valuesToParameters.flatMap(_._2):_*)
-
-      val savedCount = Database.executeUpdate(sql)
-
-      if (savedCount != countries.size) {
-        Log.error(s"""Failed to save ${countries.size} countries to database, affected row count was $savedCount!""", "Country")
-        Errors(SingleError.Database.withDetails("Failed to save some countries to database!"))
-      } else {
-        Errors.empty
-      }
-    } catch {
-      case t: Throwable =>
-        Log.throwable(t, s"""Failed to save ${countries.size} countries to database!""", "Country")
-        Errors(SingleError.Database.withDetails("Failed to save all countries to database!"))
     }
   }
   
