@@ -50,6 +50,9 @@ class SingleError(name: String, value: Option[String] = None, details: Option[St
   override def toString: String = toJson.toString()
 }
 
+/**
+ * An enumeration of some predefined single errors
+ */
 object SingleError extends EnumBase[ErrorBase] {
   /** The error that something is not found */
   case object NotFound extends SingleError("notFound")

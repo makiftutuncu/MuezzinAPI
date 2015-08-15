@@ -1,0 +1,18 @@
+# --- !Ups
+CREATE TABLE Country (
+    id     SMALLINT PRIMARY KEY,
+    name   VARCHAR(128) NOT NULL,
+    trName VARCHAR(128) NOT NULL
+) DEFAULT CHARSET=utf8;
+
+CREATE TABLE City (
+    id     SMALLINT PRIMARY KEY,
+    name   VARCHAR(128) NOT NULL
+) DEFAULT CHARSET=utf8;
+
+CREATE TABLE District (
+    id     SMALLINT PRIMARY KEY,
+    name   VARCHAR(128) NOT NULL
+) DEFAULT CHARSET=utf8;
+
+# --- !Downs

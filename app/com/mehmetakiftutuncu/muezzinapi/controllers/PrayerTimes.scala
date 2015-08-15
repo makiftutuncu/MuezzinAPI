@@ -1,6 +1,7 @@
 package com.mehmetakiftutuncu.muezzinapi.controllers
 
 import com.mehmetakiftutuncu.muezzinapi.extractors.prayertimes.{CityExtractor, CountryExtractor, DistrictExtractor, PrayerTimesExtractor}
+import com.mehmetakiftutuncu.muezzinapi.models.Data
 import com.mehmetakiftutuncu.muezzinapi.models.base.MuezzinAPIController
 import com.mehmetakiftutuncu.muezzinapi.models.prayertimes.{City, Country, District}
 import com.mehmetakiftutuncu.muezzinapi.utilities.Log
@@ -13,9 +14,36 @@ import scala.util.Try
 
 object PrayerTimes extends MuezzinAPIController {
   def getCountries = Action.async {
-    CountryExtractor.extractCountries() map {
-      case Left(errors)     => errorResponse(errors)
-      case Right(countries) => jsonResponse(Json.toJson(countries.map(Country.toJson)))
+    val key = "prayertimes.countries"
+
+    val errorsOrCountries = Data.get[List[Country]](key) {
+      Country.getAllFromDatabase
+    }
+
+    if (errorsOrCountries.isLeft) {
+      futureErrorResponse(errorsOrCountries.left.get)
+    } else {
+      val countries = errorsOrCountries.right.get
+
+      if (countries.nonEmpty) {
+        futureJsonResponse(Json.toJson(countries.map(Country.toJson)))
+      } else {
+        CountryExtractor.extractCountries() map {
+          case Left(extractErrors) =>
+            errorResponse(extractErrors)
+
+          case Right(extractedCountries) =>
+            val saveErrors = Data.save[List[Country]](key, extractedCountries) {
+              Country.saveAllToDatabase(extractedCountries)
+            }
+
+            if (saveErrors.hasErrors) {
+              errorResponse(saveErrors)
+            } else {
+              jsonResponse(Json.toJson(extractedCountries.map(Country.toJson)))
+            }
+        }
+      }
     }
   }
 
