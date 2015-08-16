@@ -221,6 +221,10 @@ object Web {
     WS.url(url).withRequestTimeout(Conf.wsTimeout).get() map {
       response: WSResponse =>
         block(response)
+    } recover {
+      case t: Throwable =>
+        Log.throwable(t, s"""Failed to send GET request to "$url"!""", "Web")
+        Left(Errors(SingleError.RequestFailed.withValue("GET").withDetails("Request failed with exception!")))
     }
   }
 
@@ -240,6 +244,10 @@ object Web {
     WS.url(url).withRequestTimeout(Conf.wsTimeout).post(body) map {
       response: WSResponse =>
         block(response)
+    } recover {
+      case t: Throwable =>
+        Log.throwable(t, s"""Failed to send POST request to "$url"!""", "Web")
+        Left(Errors(SingleError.RequestFailed.withValue("POST").withDetails("Request failed with exception!")))
     }
   }
 }

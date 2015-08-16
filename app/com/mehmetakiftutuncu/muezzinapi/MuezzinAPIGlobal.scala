@@ -17,7 +17,7 @@ object MuezzinAPIGlobal  extends GlobalSettings {
   }
 
   override def onHandlerNotFound(request: RequestHeader) = {
-    Future.successful(NotFound("Not found!"))
+    Future.successful(NotFound("Action not found! Make sure your API call has correct path and parameters."))
   }
 
   override def onBadRequest(request: RequestHeader, error: String) = {
@@ -25,6 +25,6 @@ object MuezzinAPIGlobal  extends GlobalSettings {
   }
 
   override def onError(request: RequestHeader, ex: Throwable) = {
-    Future.successful(InternalServerError("An error occurred! " + ex.getMessage))
+    Future.successful(InternalServerError("An unexpected error occurred! " + ex.getMessage))
   }
 }

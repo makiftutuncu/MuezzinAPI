@@ -3,7 +3,7 @@ package com.mehmetakiftutuncu.muezzinapi.controllers
 import com.mehmetakiftutuncu.muezzinapi.extractors.prayertimes.{CityExtractor, CountryExtractor, DistrictExtractor, PrayerTimesExtractor}
 import com.mehmetakiftutuncu.muezzinapi.models.Data
 import com.mehmetakiftutuncu.muezzinapi.models.base.MuezzinAPIController
-import com.mehmetakiftutuncu.muezzinapi.models.prayertimes.{City, Country, District, PrayerTimes => PrayerTimesModel}
+import com.mehmetakiftutuncu.muezzinapi.models.prayertimes.{City, Country, District, PrayerTimes}
 import com.mehmetakiftutuncu.muezzinapi.utilities.Log
 import com.mehmetakiftutuncu.muezzinapi.utilities.error.{Errors, SingleError}
 import play.api.libs.json.{JsValue, Json}
@@ -12,7 +12,7 @@ import play.api.mvc.Action
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Try
 
-object PrayerTimes extends MuezzinAPIController {
+object PrayerTimesController extends MuezzinAPIController {
   def getCountries = Action.async {
     def getResult(countries: List[Country]): JsValue = {
       Json.obj("countries" -> Json.toJson(countries.map(_.toJson)))
@@ -146,7 +146,7 @@ object PrayerTimes extends MuezzinAPIController {
   }
 
   def getTimes(country: String, city: String, district: String) = Action.async {
-    def getResult(countryId: Int, cityId: Int, districtId: Option[Int], prayerTimesList: List[PrayerTimesModel]): JsValue = {
+    def getResult(countryId: Int, cityId: Int, districtId: Option[Int], prayerTimesList: List[PrayerTimes]): JsValue = {
       Json.obj(
         "country"  -> countryId,
         "city"     -> cityId,
@@ -175,8 +175,8 @@ object PrayerTimes extends MuezzinAPIController {
 
         val key = s"prayertimes.$countryId.$cityId.$districtId"
 
-        val errorsOrPrayerTimesList = Data.get[List[PrayerTimesModel]](key) {
-          PrayerTimesModel.getAllFromDatabase(countryId, cityId, districtId)
+        val errorsOrPrayerTimesList = Data.get[List[PrayerTimes]](key) {
+          PrayerTimes.getAllFromDatabase(countryId, cityId, districtId)
         }
 
         if (errorsOrPrayerTimesList.isLeft) {
@@ -192,8 +192,8 @@ object PrayerTimes extends MuezzinAPIController {
                 errorResponse(extractErrors)
 
               case Right(extractedPrayerTimesList) =>
-                val saveErrors = Data.save[List[PrayerTimesModel]](key, extractedPrayerTimesList) {
-                  PrayerTimesModel.saveAllToDatabase(extractedPrayerTimesList)
+                val saveErrors = Data.save[List[PrayerTimes]](key, extractedPrayerTimesList) {
+                  PrayerTimes.saveAllToDatabase(extractedPrayerTimesList)
                 }
 
                 if (saveErrors.hasErrors) {

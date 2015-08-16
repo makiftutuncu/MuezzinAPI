@@ -1,12 +1,12 @@
 package com.mehmetakiftutuncu.muezzinapi.models.prayertimes
 
 import anorm.NamedParameter
-import com.mehmetakiftutuncu.muezzinapi.models.base.{Jsonable, MuezzinAPIModel}
+import com.mehmetakiftutuncu.muezzinapi.models.base.Jsonable
 import com.mehmetakiftutuncu.muezzinapi.utilities.error.{Errors, SingleError}
 import com.mehmetakiftutuncu.muezzinapi.utilities.{Database, Log}
 import play.api.libs.json.{JsValue, Json}
 
-case class Country(id: Int, name: String, trName: String) extends MuezzinAPIModel with Jsonable[Country] {
+case class Country(id: Int, name: String, trName: String) extends Jsonable[Country] {
   /**
    * Converts this object to Json
    *

@@ -1,7 +1,7 @@
 package com.mehmetakiftutuncu.muezzinapi.models.prayertimes
 
 import anorm.NamedParameter
-import com.mehmetakiftutuncu.muezzinapi.models.base.{Jsonable, MuezzinAPIModel}
+import com.mehmetakiftutuncu.muezzinapi.models.base.Jsonable
 import com.mehmetakiftutuncu.muezzinapi.utilities.error.{Errors, SingleError}
 import com.mehmetakiftutuncu.muezzinapi.utilities.{Database, Log}
 import org.joda.time.{DateTime, DateTimeZone}
@@ -17,7 +17,7 @@ case class PrayerTimes(countryId: Int,
                        asr: DateTime,
                        maghrib: DateTime,
                        isha: DateTime,
-                       qibla: DateTime) extends MuezzinAPIModel with Jsonable[PrayerTimes] {
+                       qibla: DateTime) extends Jsonable[PrayerTimes] {
   /**
    * Converts this object to Json
    *

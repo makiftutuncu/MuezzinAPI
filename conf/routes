@@ -6,11 +6,11 @@
 GET     /                                       com.mehmetakiftutuncu.muezzinapi.controllers.Application.index
 
 # Prayer times
-GET     /prayertimes/countries                  com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimes.getCountries
-GET     /prayertimes/cities/:country            com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimes.getCities(country)
-GET     /prayertimes/districts/:city            com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimes.getDistricts(city)
-GET     /prayertimes/:country/:city/:district   com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimes.getTimes(country, city, district)
-GET     /prayertimes/:country/:city             com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimes.getTimesWithoutDistrict(country, city)
+GET     /prayertimes/countries                  com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getCountries
+GET     /prayertimes/cities/:country            com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getCities(country)
+GET     /prayertimes/districts/:city            com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getDistricts(city)
+GET     /prayertimes/:country/:city/:district   com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getTimes(country, city, district)
+GET     /prayertimes/:country/:city             com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getTimesWithoutDistrict(country, city)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file                           controllers.Assets.versioned(path="/public", file: Asset)

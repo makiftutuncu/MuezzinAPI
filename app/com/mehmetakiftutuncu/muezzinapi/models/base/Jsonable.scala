@@ -6,9 +6,9 @@ import play.api.libs.json.JsValue
  * To impose Json capabilities to extending it's extending class,
  * classes extending this trait must provide toJson implementation.
  *
- * @tparam T Type of Jsonable, a subtype of MuezzinAPIModel model
+ * @tparam T Type of Jsonable
  */
-trait Jsonable[T <: MuezzinAPIModel] {
+trait Jsonable[T] {
   /**
    * Converts this object to Json
    *

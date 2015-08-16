@@ -21,31 +21,39 @@ object CityExtractor {
   }
 
   private def parseCities(countryId: Int, page: JsValue): Either[Errors, List[City]] = {
-    val citiesJsonAsOpt = page.asOpt[JsArray]
+    try {
+      Log.debug(s"""Parsing cities for country "$countryId"...""", "CityExtractor")
 
-    if (citiesJsonAsOpt.isEmpty) {
-      Log.error(s"""Failed to parse cities for country "$countryId". Page has invalid format: $page""", "CityExtractor")
-      Left(Errors(SingleError.InvalidData.withDetails("Cities page have invalid format.")))
-    } else {
-      val citiesJs = citiesJsonAsOpt.get.value.toList
+      val citiesJsonAsOpt = page.asOpt[JsArray]
 
-      if (citiesJs.exists(j => (j \ "Text").asOpt[String].isEmpty || (j \ "Value").asOpt[String].flatMap(s => Try(s.toInt).toOption).isEmpty)) {
-        Log.error(s"""Failed to parse cities for country "$countryId". Found some invalid cities in page: $page""", "CityExtractor")
-        Left(Errors(SingleError.InvalidData.withDetails("Invalid cities are found in page.")))
+      if (citiesJsonAsOpt.isEmpty) {
+        Log.error(s"""Failed to parse cities for country "$countryId". Page has invalid format: $page""", "CityExtractor")
+        Left(Errors(SingleError.InvalidData.withDetails("Cities page have invalid format.")))
       } else {
-        val cities = citiesJs map {
-          cityJs =>
-            val id       = (cityJs \ "Value").as[String].toInt
-            val htmlName = Utils.sanitizeHtml((cityJs \ "Text").as[String])
-            val name     = City.cityIdToTurkishNameMap.getOrElse(id, htmlName)
+        val citiesJs = citiesJsonAsOpt.get.value.toList
 
-            City(id, countryId, name)
+        if (citiesJs.exists(j => (j \ "Text").asOpt[String].isEmpty || (j \ "Value").asOpt[String].flatMap(s => Try(s.toInt).toOption).isEmpty)) {
+          Log.error(s"""Failed to parse cities for country "$countryId". Found some invalid cities in page: $page""", "CityExtractor")
+          Left(Errors(SingleError.InvalidData.withDetails("Invalid cities are found in page.")))
+        } else {
+          val cities = citiesJs map {
+            cityJs =>
+              val id       = (cityJs \ "Value").as[String].toInt
+              val htmlName = Utils.sanitizeHtml((cityJs \ "Text").as[String])
+              val name     = City.cityIdToTurkishNameMap.getOrElse(id, htmlName)
+
+              City(id, countryId, name)
+          }
+
+          val sortedCities = cities.sortBy(_.name)
+
+          Right(sortedCities)
         }
-
-        val sortedCities = cities.sortBy(_.name)
-
-        Right(sortedCities)
       }
+    } catch {
+      case t: Throwable =>
+        Log.throwable(t, s"""Failed to parse cities for country "$countryId"!""", "CityExtractor")
+        Left(Errors(SingleError.RequestFailed.withDetails(s"""Failed to parse cities for country "$countryId"!""")))
     }
   }
 }

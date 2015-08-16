@@ -21,30 +21,38 @@ object DistrictExtractor {
    }
 
    private def parseDistricts(cityId: Int, page: JsValue): Either[Errors, List[District]] = {
-     val districtsJsonAsOpt = page.asOpt[JsArray]
+     try {
+       Log.debug(s"""Parsing districts for city "$cityId"...""", "DistrictExtractor")
 
-     if (districtsJsonAsOpt.isEmpty) {
-       Log.error(s"""Failed to parse districts for city "$cityId". Page has invalid format: $page""", "DistrictExtractor")
-       Left(Errors(SingleError.InvalidData.withDetails("Districts page have invalid format.")))
-     } else {
-       val districtsJs = districtsJsonAsOpt.get.value.toList
+       val districtsJsonAsOpt = page.asOpt[JsArray]
 
-       if (districtsJs.exists(j => (j \ "Text").asOpt[String].isEmpty || (j \ "Value").asOpt[String].flatMap(s => Try(s.toInt).toOption).isEmpty)) {
-         Log.error(s"""Failed to parse districts for city "$cityId". Found some invalid districts in page: $page""", "DistrictExtractor")
-         Left(Errors(SingleError.InvalidData.withDetails("Invalid districts are found in page.")))
+       if (districtsJsonAsOpt.isEmpty) {
+         Log.error(s"""Failed to parse districts for city "$cityId". Page has invalid format: $page""", "DistrictExtractor")
+         Left(Errors(SingleError.InvalidData.withDetails("Districts page have invalid format.")))
        } else {
-         val districts = districtsJs map {
-           districtJs =>
-             val id   = (districtJs \ "Value").as[String].toInt
-             val name = Utils.sanitizeHtml((districtJs \ "Text").as[String])
+         val districtsJs = districtsJsonAsOpt.get.value.toList
 
-             District(id, cityId, name)
+         if (districtsJs.exists(j => (j \ "Text").asOpt[String].isEmpty || (j \ "Value").asOpt[String].flatMap(s => Try(s.toInt).toOption).isEmpty)) {
+           Log.error(s"""Failed to parse districts for city "$cityId". Found some invalid districts in page: $page""", "DistrictExtractor")
+           Left(Errors(SingleError.InvalidData.withDetails("Invalid districts are found in page.")))
+         } else {
+           val districts = districtsJs map {
+             districtJs =>
+               val id   = (districtJs \ "Value").as[String].toInt
+               val name = Utils.sanitizeHtml((districtJs \ "Text").as[String])
+
+               District(id, cityId, name)
+           }
+
+           val sortedDistricts = districts.sortBy(_.name)
+
+           Right(sortedDistricts)
          }
-
-         val sortedDistricts = districts.sortBy(_.name)
-
-         Right(sortedDistricts)
        }
+     } catch {
+       case t: Throwable =>
+         Log.throwable(t, s"""Failed to parse districts for city "$cityId"!""", "DistrictExtractor")
+         Left(Errors(SingleError.RequestFailed.withDetails(s"""Failed to parse districts for city "$cityId"!""")))
      }
    }
  }
