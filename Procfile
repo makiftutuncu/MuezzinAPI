@@ -1,1 +1,0 @@
-web: target/universal/stage/bin/muezzinapi -Ddb.default.driver=org.postgresql.Driver
