@@ -7,6 +7,7 @@ import play.api.mvc.RequestHeader
 import play.api.mvc.Results._
 import play.api.{Application, GlobalSettings}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**
