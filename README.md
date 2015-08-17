@@ -104,7 +104,7 @@ It returns a list of all districts of given ```cityId```. Example is for İzmir.
 ****
 
 ###List of Prayer Times of a Country, City and District
-#####Path: [```/prayetimes/<countryId>/<cityId>/<districtId>```](https://muezzin.herokuapp.com/2/540/9560)
+#####Path: [```/prayetimes/<countryId>/<cityId>/<districtId>```](https://muezzin.herokuapp.com/prayertimes/2/540/9560)
 It returns a list of prayer times for a month belonging to given ```countryId```, ```cityId``` and ```districtId```. Example is for Turkey, İzmir, İzmir. If you do not have district for your country and city, use endpoint without district id (See below). Please note that there are no times available for past dates and more than 1 month future dates. Diyanet only provides 1 month of prayer times starting from current time. Therefore, it is client's responsibility to keep requested prayer times and request more whenever needed.
 
 **Example Response**
@@ -137,7 +137,7 @@ It returns a list of prayer times for a month belonging to given ```countryId```
 ****
 
 ###List of Prayer Times of a Country and City with District
-#####Path: [```/prayetimes/<countryId>/<cityId>```](https://muezzin.herokuapp.com/118/16382)
+#####Path: [```/prayetimes/<countryId>/<cityId>```](https://muezzin.herokuapp.com/prayertimes/118/16382)
 It returns a list of prayer times for a month belonging to given ```countryId``` and ```cityId``` with no ```districtId```. This endpoint should be used for cities that have no districts. Example is for Tunus, Al Qayrawan. Please note that there are no times available for past dates and more than 1 month future dates. Diyanet only provides 1 month of prayer times starting from current time. Therefore, it is client's responsibility to keep requested prayer times and request more whenever needed.
 
 **Example Response**
