@@ -6,6 +6,13 @@ import com.mehmetakiftutuncu.muezzinapi.utilities.error.{Errors, SingleError}
 import com.mehmetakiftutuncu.muezzinapi.utilities.{Database, Log}
 import play.api.libs.json.{JsValue, Json}
 
+/**
+ * Represents a country
+ *
+ * @param id     Id of the country as a number
+ * @param name   Name of the country formatted as "<English> [<Original>]"
+ * @param trName Name of the country in Turkish
+ */
 case class Country(id: Int, name: String, trName: String) extends Jsonable[Country] {
   /**
    * Converts this object to Json
@@ -15,6 +22,9 @@ case class Country(id: Int, name: String, trName: String) extends Jsonable[Count
   override def toJson: JsValue = Json.obj("id" -> id, "name" -> name, "trName" -> trName)
 }
 
+/**
+ * Companion object of Country
+ */
 object Country {
   /**
    * Gets all countries from database
@@ -96,7 +106,8 @@ object Country {
       }
     }
   }
-  
+
+  /** A mapping of country ids of Diyanet to their Turkish names */
   val countryIdToTurkishNameMap: Map[Int, String] = Map(
     166 -> "Afganistan",
     13  -> "Almanya",
@@ -295,6 +306,7 @@ object Country {
     136 -> "Zimbabve"
   )
 
+  /** A mapping of country ids of Diyanet to their original, correctly spelled names */
   val countryIdToNameMap: Map[Int, String] = Map(
     166 -> "Afghanistan [افغانستان]",
     13  -> "Germany [Deutschland]",

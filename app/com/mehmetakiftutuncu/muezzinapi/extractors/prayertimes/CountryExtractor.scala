@@ -7,7 +7,15 @@ import com.mehmetakiftutuncu.muezzinapi.utilities.{Conf, Log, Utils, Web}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
+/**
+ * An extractor to download and extract country names
+ */
 object CountryExtractor {
+  /**
+   * Downloads and extracts countries
+   *
+   * @return Some errors or a list of countries
+   */
   def extractCountries(): Future[Either[Errors, List[Country]]] = {
     Web.getForHtml(Conf.Url.countries) map {
       case Left(getPageErrors) =>
@@ -18,6 +26,13 @@ object CountryExtractor {
     }
   }
 
+  /**
+   * Parses downloaded countries HTML
+   *
+   * @param page Countries as HTML
+   *
+   * @return Some errors or a list of countries
+   */
   private def parseCountries(page: String): Either[Errors, List[Country]] = {
     try {
       Log.debug(s"""Parsing countries...""", "CountryExtractor")

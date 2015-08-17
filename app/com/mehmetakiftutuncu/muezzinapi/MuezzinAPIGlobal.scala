@@ -1,19 +1,31 @@
 package com.mehmetakiftutuncu.muezzinapi
 
-import com.mehmetakiftutuncu.muezzinapi.utilities.Log
+import akka.actor.Props
+import com.mehmetakiftutuncu.muezzinapi.utilities.{Conf, Log}
+import play.api.libs.concurrent.Akka
 import play.api.mvc.RequestHeader
 import play.api.mvc.Results._
 import play.api.{Application, GlobalSettings}
 
 import scala.concurrent.Future
 
-object MuezzinAPIGlobal  extends GlobalSettings {
+/**
+ * Global configuration object of MuezzinAPI
+ */
+object MuezzinAPIGlobal extends GlobalSettings {
   override def onStart(app: Application) {
     Log.warn("Starting Muezzin API...", "Global")
+
+    // Schedule heartbeat
+    val heartbeat = Akka.system(app).actorOf(Props[Heartbeat], "heartbeat")
+    Akka.system(app).scheduler.schedule(Conf.heartbeatInitialDelay, Conf.heartbeatInterval, heartbeat, "Wake up!")
   }
 
   override def onStop(app: Application) {
     Log.warn("Stopping Muezzin API...", "Global")
+
+    // Kill actor system to stop heartbeat
+    Akka.system(app).shutdown()
   }
 
   override def onHandlerNotFound(request: RequestHeader) = {

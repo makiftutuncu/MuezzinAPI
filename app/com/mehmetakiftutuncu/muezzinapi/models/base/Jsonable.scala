@@ -16,5 +16,10 @@ trait Jsonable[T] {
    */
   def toJson: JsValue
 
+  /**
+   * Custom toString implementation to output Json
+   *
+   * @return Json representation of this object as string
+   */
   override def toString: String = toJson.toString()
 }

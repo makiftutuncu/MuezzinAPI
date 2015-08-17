@@ -6,6 +6,13 @@ import com.mehmetakiftutuncu.muezzinapi.utilities.error.{Errors, SingleError}
 import com.mehmetakiftutuncu.muezzinapi.utilities.{Database, Log}
 import play.api.libs.json.{JsValue, Json}
 
+/**
+ * Represents a city in a country
+ *
+ * @param id        Id of the city as a number
+ * @param countryId Id of country this city belongs to
+ * @param name      Name of the city
+ */
 case class City(id: Int, countryId: Int, name: String) extends Jsonable[City] {
   /**
    * Converts this object to Json
@@ -15,6 +22,9 @@ case class City(id: Int, countryId: Int, name: String) extends Jsonable[City] {
   override def toJson: JsValue = Json.obj("id" -> id, "name" -> name)
 }
 
+/**
+ * Companion object of City
+ */
 object City {
   /**
    * Gets all cities from database
@@ -98,6 +108,7 @@ object City {
     }
   }
 
+  /** A mapping of city ids of Diyanet to their correctly spelled names, unfortunatelly only for Turkey */
   val cityIdToTurkishNameMap: Map[Int, String] = Map(
     500 -> "Adana",
     501 -> "Adıyaman",

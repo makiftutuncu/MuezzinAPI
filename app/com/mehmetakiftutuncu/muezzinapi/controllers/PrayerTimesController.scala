@@ -12,7 +12,43 @@ import play.api.mvc.Action
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Try
 
+/**
+ * Prayer times controller of the application, provides country, city, district and prayer times data
+ */
 object PrayerTimesController extends MuezzinAPIController {
+  /**
+   * Gets a list of available countries
+   *
+   * @return When successful, a Json like following
+   *
+   *         {{{
+   *         {
+   *         "countries": [
+   *         {
+   *         "id": 2,
+   *         "name": "Turkey [Türkiye]",
+   *         "trName": "Türkiye"
+   *         },
+   *         ...
+   *         ]
+   *         }
+   *         }}}
+   *
+   *         and when failed, a Json like following
+   *
+   *         {{{
+   *         {
+   *         "errors": [
+   *         {
+   *         "name": "...",
+   *         "value": "...",
+   *         "details": "..."
+   *         },
+   *         ...
+   *         ]
+   *         }
+   *         }}}
+   */
   def getCountries = Action.async {
     def getResult(countries: List[Country]): JsValue = {
       Json.obj("countries" -> Json.toJson(countries.map(_.toJson)))
@@ -51,6 +87,41 @@ object PrayerTimesController extends MuezzinAPIController {
     }
   }
 
+  /**
+   * Gets a list of available cities for given country
+   *
+   * @param country Id of the country, a number
+   *
+   * @return When successful, a Json like following
+   *
+   *         {{{
+   *         {
+   *         "countryId": 2,
+   *         "cities": [
+   *         {
+   *         "id": 500,
+   *         "name": "Adana"
+   *         },
+   *         ...
+   *         ]
+   *         }
+   *         }}}
+   *
+   *         and when failed, a Json like following
+   *
+   *         {{{
+   *         {
+   *         "errors": [
+   *         {
+   *         "name": "...",
+   *         "value": "...",
+   *         "details": "..."
+   *         },
+   *         ...
+   *         ]
+   *         }
+   *         }}}
+   */
   def getCities(country: String) = Action.async {
     def getResult(countryId: Int, cities: List[City]): JsValue = {
       Json.obj("countryId" -> countryId, "cities" -> Json.toJson(cities.map(_.toJson)))
@@ -98,6 +169,41 @@ object PrayerTimesController extends MuezzinAPIController {
     }
   }
 
+  /**
+   * Gets a list of available districts for given city
+   *
+   * @param city Id of the city, a number
+   *
+   * @return When successful, a Json like following
+   *
+   *         {{{
+   *         {
+   *         "cityId": 540,
+   *         "districts": [
+   *         {
+   *         "id": 9570,
+   *         "name": "Urla"
+   *         },
+   *         ...
+   *         ]
+   *         }
+   *         }}}
+   *
+   *         and when failed, a Json like following
+   *
+   *         {{{
+   *         {
+   *         "errors": [
+   *         {
+   *         "name": "...",
+   *         "value": "...",
+   *         "details": "..."
+   *         },
+   *         ...
+   *         ]
+   *         }
+   *         }}}
+   */
   def getDistricts(city: String) = Action.async {
     def getResult(cityId: Int, districts: List[District]): JsValue = {
       Json.obj("cityId" -> cityId, "districts" -> Json.toJson(districts.map(_.toJson)))
@@ -145,7 +251,52 @@ object PrayerTimesController extends MuezzinAPIController {
     }
   }
 
-  def getTimes(country: String, city: String, district: String) = Action.async {
+  /**
+   * Gets a list of prayer times for given country, city and district
+   *
+   * @param country  Id of the country, a number
+   * @param city     Id of the city, a number
+   * @param district Id of the district, a number
+   *
+   * @return When successful, a Json like following
+   *
+   *         {{{
+   *         {
+   *         "countryId": 2,
+   *         "cityId": 509,
+   *         "districtId": 9250,
+   *         "districts": [
+   *         {
+   *         "dayDate": 1439683200,
+   *         "fajr": 1439696040,
+   *         "shuruq": 1439701980,
+   *         "dhuhr": 1439727720,
+   *         "asr": 1439741340,
+   *         "maghrib": 1439752740,
+   *         "isha": 1439758140,
+   *         "qibla": 1439728080
+   *         },
+   *         ...
+   *         ]
+   *         }
+   *         }}}
+   *
+   *         and when failed, a Json like following
+   *
+   *         {{{
+   *         {
+   *         "errors": [
+   *         {
+   *         "name": "...",
+   *         "value": "...",
+   *         "details": "..."
+   *         },
+   *         ...
+   *         ]
+   *         }
+   *         }}}
+   */
+  def getPrayerTimes(country: String, city: String, district: String) = Action.async {
     def getResult(countryId: Int, cityId: Int, districtId: Option[Int], prayerTimesList: List[PrayerTimes]): JsValue = {
       Json.obj(
         "country"  -> countryId,
@@ -208,5 +359,49 @@ object PrayerTimesController extends MuezzinAPIController {
     }
   }
 
-  def getTimesWithoutDistrict(country: String, city: String) = getTimes(country, city, "")
+  /**
+   * Gets a list of prayer times for given country and city when given city has no districts available
+   *
+   * @param country  Id of the country, a number
+   * @param city     Id of the city, a number
+   *
+   * @return When successful, a Json like following
+   *
+   *         {{{
+   *         {
+   *         "countryId": 166,
+   *         "cityId": 9956,
+   *         "districtId": null,
+   *         "districts": [
+   *         {
+   *         "dayDate": 1439683200,
+   *         "fajr": 1439696040,
+   *         "shuruq": 1439701980,
+   *         "dhuhr": 1439727720,
+   *         "asr": 1439741340,
+   *         "maghrib": 1439752740,
+   *         "isha": 1439758140,
+   *         "qibla": 1439728080
+   *         },
+   *         ...
+   *         ]
+   *         }
+   *         }}}
+   *
+   *         and when failed, a Json like following
+   *
+   *         {{{
+   *         {
+   *         "errors": [
+   *         {
+   *         "name": "...",
+   *         "value": "...",
+   *         "details": "..."
+   *         },
+   *         ...
+   *         ]
+   *         }
+   *         }}}
+   */
+  def getPrayerTimesWithoutDistrict(country: String, city: String) = getPrayerTimes(country, city, "")
 }

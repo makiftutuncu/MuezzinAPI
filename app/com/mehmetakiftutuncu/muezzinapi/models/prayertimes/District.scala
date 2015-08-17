@@ -6,6 +6,13 @@ import com.mehmetakiftutuncu.muezzinapi.utilities.error.{Errors, SingleError}
 import com.mehmetakiftutuncu.muezzinapi.utilities.{Database, Log}
 import play.api.libs.json.{JsValue, Json}
 
+/**
+ * Represents a district in a city
+ *
+ * @param id     Id of the district as a number
+ * @param cityId Id of the city this district belongs to
+ * @param name   Name of the district
+ */
 case class District(id: Int, cityId: Int, name: String) extends Jsonable[District] {
   /**
    * Converts this object to Json
@@ -15,7 +22,10 @@ case class District(id: Int, cityId: Int, name: String) extends Jsonable[Distric
   override def toJson: JsValue = Json.obj("id" -> id, "name" -> name)
 }
 
-object District extends  {
+/**
+ * Companion object of District
+ */
+object District extends {
   /**
    * Gets all districts from database
    *

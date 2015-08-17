@@ -1,5 +1,8 @@
 package com.mehmetakiftutuncu.muezzinapi.utilities
 
+/**
+ * A utility object for utility stuff (utilitiception)
+ */
 object Utils {
   /**
    * Sanitizes and beautifies a string

@@ -7,6 +7,21 @@ import com.mehmetakiftutuncu.muezzinapi.utilities.{Database, Log}
 import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.json.{JsValue, Json}
 
+/**
+ * Represents prayer times for a day for a location
+ *
+ * @param countryId  Id of country this prayer times belongs to
+ * @param cityId     Id of city this prayer times belongs to
+ * @param districtId Id of district this prayer times belongs to
+ * @param dayDate    A [[org.joda.time.DateTime]] representing the day with hours, minutes, seconds and milliseconds set to 0 and timezone to UTC
+ * @param fajr       A [[org.joda.time.DateTime]] representing fajr time (dayDate + difference to fajr)
+ * @param shuruq     A [[org.joda.time.DateTime]] representing shuruq time (dayDate + difference to shuruq)
+ * @param dhuhr      A [[org.joda.time.DateTime]] representing dhuhr time (dayDate + difference to dhuhr)
+ * @param asr        A [[org.joda.time.DateTime]] representing asr time (dayDate + difference to asr)
+ * @param maghrib    A [[org.joda.time.DateTime]] representing maghrib time (dayDate + difference to maghrib)
+ * @param isha       A [[org.joda.time.DateTime]] representing isha time (dayDate + difference to isha)
+ * @param qibla      A [[org.joda.time.DateTime]] representing qibla time (dayDate + difference to qibla)
+ */
 case class PrayerTimes(countryId: Int,
                        cityId: Int,
                        districtId: Option[Int],
@@ -35,6 +50,9 @@ case class PrayerTimes(countryId: Int,
   )
 }
 
+/**
+ * Companion object of PrayerTimes
+ */
 object PrayerTimes {
   /**
    * Gets prayer times for a month for given country, city and district, from database

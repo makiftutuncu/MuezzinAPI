@@ -9,7 +9,17 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Try
 
+/**
+ * An extractor to download and extract city names for a given country
+ */
 object CityExtractor {
+  /**
+   * Downloads and extracts cities for given country
+   *
+   * @param countryId Id of country whose cities to get
+   *
+   * @return Some errors or a list of cities
+   */
   def extractCities(countryId: Int): Future[Either[Errors, List[City]]] = {
     Web.getForJson(Conf.Url.cities.format(countryId)) map {
       case Left(getPageErrors) =>
@@ -20,6 +30,14 @@ object CityExtractor {
     }
   }
 
+  /**
+   * Parses downloaded cities Json
+   *
+   * @param countryId Id of country these cities belong to
+   * @param page      Cities as Json
+   *
+   * @return Some errors or a list of cities
+   */
   private def parseCities(countryId: Int, page: JsValue): Either[Errors, List[City]] = {
     try {
       Log.debug(s"""Parsing cities for country "$countryId"...""", "CityExtractor")

@@ -8,10 +8,24 @@ import org.joda.time.{DateTime, DateTimeZone}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
+/**
+ * An extractor to download and extract prayer times for a given country, city and district
+ */
 object PrayerTimesExtractor {
+  /** Date formatted as dd.MM.yyyy */
   val dateRegex = """^(\d{2})\.(\d{2})\.(\d{4})$""".r
+  /** Time formatted HH:mm */
   val timeRegex = """^(\d{2}):(\d{2})$""".r
 
+  /**
+   * Downloads and extracts prayer times for given country, city and district
+   *
+   * @param countryId  Id of country whose prayer times to get
+   * @param cityId     Id of city whose prayer times to get
+   * @param districtId Id of district whose prayer times to get
+   *
+   * @return Some errors or a list of prayer times
+   */
   def extractPrayerTimes(countryId: Int, cityId: Int, districtId: Option[Int]): Future[Either[Errors, List[PrayerTimes]]] = {
     Web.postForHtml(Conf.Url.prayerTimes,
                     Map(
@@ -28,6 +42,16 @@ object PrayerTimesExtractor {
     }
   }
 
+  /**
+   * Parses downloaded prayer times HTML
+   *
+   * @param countryId  Id of country these prayer times belong to
+   * @param cityId     Id of city these prayer times belong to
+   * @param districtId Id of district these prayer times belong to
+   * @param page       Prayer times as HTML
+   *
+   * @return Some errors or a list of prayer times
+   */
   private def parsePrayerTimes(countryId: Int, cityId: Int, districtId: Option[Int], page: String): Either[Errors, List[PrayerTimes]] = {
     try {
       Log.debug(s"""Parsing prayer times for country "$countryId", city "$cityId" and district "$districtId"...""", "PrayerTimesExtractor")
@@ -84,6 +108,13 @@ object PrayerTimesExtractor {
     }
   }
 
+  /**
+   * Parses given date string
+   *
+   * @param dateString Date as a formatted string
+   *
+   * @return Parsed [[org.joda.time.DateTime]] with hours, minutes, seconds and milliseconds set to 0 and timezone to UTC
+   */
   private def getDate(dateString: String): DateTime = {
     val dateParts          = dateRegex.findFirstMatchIn(dateString).get
     val (day, month, year) = (dateParts.group(1).toInt, dateParts.group(2).toInt, dateParts.group(3).toInt)
@@ -91,6 +122,14 @@ object PrayerTimesExtractor {
     new DateTime(year, month, day, 0, 0, 0, 0, DateTimeZone.UTC)
   }
 
+  /**
+   * Parses given time and gets shifted time according to a base time
+   *
+   * @param base       Base [[org.joda.time.DateTime]]
+   * @param timeString Time as a formatted string
+   *
+   * @return Parsed and shifted [[org.joda.time.DateTime]] with hours and minutes of parsed value added to base
+   */
   private def getTime(base: DateTime, timeString: String): DateTime = {
     val timeParts        = timeRegex.findFirstMatchIn(timeString).get
     val (hours, minutes) = (timeParts.group(1).toInt, timeParts.group(2).toInt)

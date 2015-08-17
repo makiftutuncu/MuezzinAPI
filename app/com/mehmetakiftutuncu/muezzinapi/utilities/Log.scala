@@ -48,6 +48,14 @@ object Log {
     Logger.error(format(tag, message), error)
   }
 
+  /**
+   * Formats given message and tag to look pretty in the log
+   *
+   * @param tag     Tag of the log
+   * @param message Message of the log
+   *
+   * @return Pretty looking log message containing date and time, tag (if specified) and message
+   */
   private def format(tag: => String, message: => String): String = {
     val now = DateTime.now().toString("YY.MM.dd, HH:mm:ss")
 
