@@ -1,0 +1,1 @@
+web: target/universal/stage/bin/myapp -Dhttp.port=${PORT} -Dconfig.resource=application.conf
