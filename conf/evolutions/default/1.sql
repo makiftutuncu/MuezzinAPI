@@ -3,19 +3,19 @@ CREATE TABLE Country (
     id     SMALLINT PRIMARY KEY,
     name   VARCHAR(128) NOT NULL,
     trName VARCHAR(128) NOT NULL
-) DEFAULT CHARSET=utf8;
+);
 
 CREATE TABLE City (
     id        SMALLINT PRIMARY KEY,
     countryId SMALLINT NOT NULL,
     name      VARCHAR(128) NOT NULL
-) DEFAULT CHARSET=utf8;
+);
 
 CREATE TABLE District (
     id     SMALLINT PRIMARY KEY,
     cityId SMALLINT NOT NULL,
     name   VARCHAR(128) NOT NULL
-) DEFAULT CHARSET=utf8;
+);
 
 CREATE TABLE PrayerTimes (
     countryId  SMALLINT NOT NULL,
@@ -30,6 +30,6 @@ CREATE TABLE PrayerTimes (
     isha       BIGINT NOT NULL,
     qibla      BIGINT NOT NULL,
     UNIQUE (countryId, cityId, districtId, dayDate)
-) DEFAULT CHARSET=utf8;
+);
 
 # --- !Downs
