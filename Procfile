@@ -1,1 +1,1 @@
-web: target/universal/stage/bin/muezzinapi -Dhttp.port=${PORT} -Dconfig.resource=application.conf -Dlogger.resource=logback.xml
+web: target/universal/stage/bin/muezzinapi -Ddb.default.driver=org.postgresql.Driver
