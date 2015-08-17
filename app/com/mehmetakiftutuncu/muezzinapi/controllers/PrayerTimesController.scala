@@ -21,33 +21,33 @@ object PrayerTimesController extends MuezzinAPIController {
    *
    * @return When successful, a Json like following
    *
-   *         {{{
-   *         {
-   *         "countries": [
-   *         {
-   *         "id": 2,
-   *         "name": "Turkey [Türkiye]",
-   *         "trName": "Türkiye"
-   *         },
-   *         ...
-   *         ]
-   *         }
-   *         }}}
+   * {{{
+   * {
+   *   "countries": [
+   *     {
+   *       "id": 2,
+   *       "name": "Turkey [Türkiye]",
+   *       "trName": "Türkiye"
+   *     },
+   *     ...
+   *   ]
+   * }
+   * }}}
    *
-   *         and when failed, a Json like following
+   * and when failed, a Json like following
    *
-   *         {{{
-   *         {
-   *         "errors": [
-   *         {
-   *         "name": "...",
-   *         "value": "...",
-   *         "details": "..."
-   *         },
-   *         ...
-   *         ]
-   *         }
-   *         }}}
+   * {{{
+   * {
+   *   "errors": [
+   *     {
+   *       "name": "...",
+   *       "value": "...",
+   *       "details": "..."
+   *     },
+   *     ...
+   *   ]
+   * }
+   * }}}
    */
   def getCountries = Action.async {
     def getResult(countries: List[Country]): JsValue = {
@@ -94,33 +94,33 @@ object PrayerTimesController extends MuezzinAPIController {
    *
    * @return When successful, a Json like following
    *
-   *         {{{
-   *         {
-   *         "countryId": 2,
-   *         "cities": [
-   *         {
-   *         "id": 500,
-   *         "name": "Adana"
-   *         },
-   *         ...
-   *         ]
-   *         }
-   *         }}}
+   * {{{
+   * {
+   *   "countryId": 2,
+   *   "cities": [
+   *     {
+   *       "id": 500,
+   *       "name": "Adana"
+   *     },
+   *     ...
+   *   ]
+   * }
+   * }}}
    *
-   *         and when failed, a Json like following
+   * and when failed, a Json like following
    *
-   *         {{{
-   *         {
-   *         "errors": [
-   *         {
-   *         "name": "...",
-   *         "value": "...",
-   *         "details": "..."
-   *         },
-   *         ...
-   *         ]
-   *         }
-   *         }}}
+   * {{{
+   * {
+   *   "errors": [
+   *     {
+   *       "name": "...",
+   *       "value": "...",
+   *       "details": "..."
+   *     },
+   *     ...
+   *   ]
+   * }
+   * }}}
    */
   def getCities(country: String) = Action.async {
     def getResult(countryId: Int, cities: List[City]): JsValue = {
@@ -176,33 +176,33 @@ object PrayerTimesController extends MuezzinAPIController {
    *
    * @return When successful, a Json like following
    *
-   *         {{{
-   *         {
-   *         "cityId": 540,
-   *         "districts": [
-   *         {
-   *         "id": 9570,
-   *         "name": "Urla"
-   *         },
-   *         ...
-   *         ]
-   *         }
-   *         }}}
+   * {{{
+   * {
+   *   "cityId": 540,
+   *   "districts": [
+   *     {
+   *       "id": 9570,
+   *       "name": "Urla"
+   *     },
+   *     ...
+   *   ]
+   * }
+   * }}}
    *
-   *         and when failed, a Json like following
+   * and when failed, a Json like following
    *
-   *         {{{
-   *         {
-   *         "errors": [
-   *         {
-   *         "name": "...",
-   *         "value": "...",
-   *         "details": "..."
-   *         },
-   *         ...
-   *         ]
-   *         }
-   *         }}}
+   * {{{
+   * {
+   *   "errors": [
+   *     {
+   *       "name": "...",
+   *       "value": "...",
+   *       "details": "..."
+   *     },
+   *     ...
+   *   ]
+   * }
+   * }}}
    */
   def getDistricts(city: String) = Action.async {
     def getResult(cityId: Int, districts: List[District]): JsValue = {
@@ -260,41 +260,41 @@ object PrayerTimesController extends MuezzinAPIController {
    *
    * @return When successful, a Json like following
    *
-   *         {{{
-   *         {
-   *         "countryId": 2,
-   *         "cityId": 509,
-   *         "districtId": 9250,
-   *         "districts": [
-   *         {
-   *         "dayDate": 1439683200,
-   *         "fajr": 1439696040,
-   *         "shuruq": 1439701980,
-   *         "dhuhr": 1439727720,
-   *         "asr": 1439741340,
-   *         "maghrib": 1439752740,
-   *         "isha": 1439758140,
-   *         "qibla": 1439728080
-   *         },
-   *         ...
-   *         ]
-   *         }
-   *         }}}
+   * {{{
+   * {
+   *   "countryId": 2,
+   *   "cityId": 509,
+   *   "districtId": 9250,
+   *   "times": [
+   *     {
+   *       "dayDate": 1439683200,
+   *       "fajr": 1439696040,
+   *       "shuruq": 1439701980,
+   *       "dhuhr": 1439727720,
+   *       "asr": 1439741340,
+   *       "maghrib": 1439752740,
+   *       "isha": 1439758140,
+   *       "qibla": 1439728080
+   *     },
+   *     ...
+   *   ]
+   * }
+   * }}}
    *
-   *         and when failed, a Json like following
+   * and when failed, a Json like following
    *
-   *         {{{
-   *         {
-   *         "errors": [
-   *         {
-   *         "name": "...",
-   *         "value": "...",
-   *         "details": "..."
-   *         },
-   *         ...
-   *         ]
-   *         }
-   *         }}}
+   * {{{
+   * {
+   *   "errors": [
+   *     {
+   *       "name": "...",
+   *       "value": "...",
+   *       "details": "..."
+   *     },
+   *     ...
+   *   ]
+   * }
+   * }}}
    */
   def getPrayerTimes(country: String, city: String, district: String) = Action.async {
     def getResult(countryId: Int, cityId: Int, districtId: Option[Int], prayerTimesList: List[PrayerTimes]): JsValue = {
@@ -367,41 +367,41 @@ object PrayerTimesController extends MuezzinAPIController {
    *
    * @return When successful, a Json like following
    *
-   *         {{{
-   *         {
-   *         "countryId": 166,
-   *         "cityId": 9956,
-   *         "districtId": null,
-   *         "districts": [
-   *         {
-   *         "dayDate": 1439683200,
-   *         "fajr": 1439696040,
-   *         "shuruq": 1439701980,
-   *         "dhuhr": 1439727720,
-   *         "asr": 1439741340,
-   *         "maghrib": 1439752740,
-   *         "isha": 1439758140,
-   *         "qibla": 1439728080
-   *         },
-   *         ...
-   *         ]
-   *         }
-   *         }}}
+   * {{{
+   * {
+   *   "countryId": 166,
+   *   "cityId": 9956,
+   *   "districtId": null,
+   *   "times": [
+   *     {
+   *       "dayDate": 1439683200,
+   *       "fajr": 1439696040,
+   *       "shuruq": 1439701980,
+   *       "dhuhr": 1439727720,
+   *       "asr": 1439741340,
+   *       "maghrib": 1439752740,
+   *       "isha": 1439758140,
+   *       "qibla": 1439728080
+   *     },
+   *     ...
+   *   ]
+   * }
+   * }}}
    *
-   *         and when failed, a Json like following
+   * and when failed, a Json like following
    *
-   *         {{{
-   *         {
-   *         "errors": [
-   *         {
-   *         "name": "...",
-   *         "value": "...",
-   *         "details": "..."
-   *         },
-   *         ...
-   *         ]
-   *         }
-   *         }}}
+   * {{{
+   * {
+   *   "errors": [
+   *     {
+   *       "name": "...",
+   *       "value": "...",
+   *       "details": "..."
+   *     },
+   *     ...
+   *   ]
+   * }
+   * }}}
    */
   def getPrayerTimesWithoutDistrict(country: String, city: String) = getPrayerTimes(country, city, "")
 }
