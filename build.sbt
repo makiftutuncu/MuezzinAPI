@@ -11,8 +11,8 @@ libraryDependencies ++= Seq(
   anorm,
   ws,
   cache,
+  "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
   "com.typesafe.akka" %% "akka-actor" % "2.3.12",
   "joda-time" % "joda-time" % "2.8.2",
-  "mysql" % "mysql-connector-java" % "5.1.27",
-  "org.postgresql" % "postgresql" % "9.4-1201-jdbc41"
+  "mysql" % "mysql-connector-java" % "5.1.27"
 )
