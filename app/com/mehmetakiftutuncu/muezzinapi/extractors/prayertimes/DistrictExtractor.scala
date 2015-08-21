@@ -40,18 +40,18 @@ object DistrictExtractor {
    */
   private def parseDistricts(cityId: Int, page: JsValue): Either[Errors, List[District]] = {
     try {
-      Log.debug(s"""Parsing districts for city "$cityId"...""", "DistrictExtractor")
+      Log.debug(s"""Parsing districts for city "$cityId"...""", "DistrictExtractor.parseDistricts")
 
       val districtsJsonAsOpt = page.asOpt[JsArray]
 
       if (districtsJsonAsOpt.isEmpty) {
-        Log.error(s"""Failed to parse districts for city "$cityId". Page has invalid format: $page""", "DistrictExtractor")
+        Log.error(s"""Failed to parse districts for city "$cityId". Page has invalid format: $page""", "DistrictExtractor.parseDistricts")
         Left(Errors(SingleError.InvalidData.withDetails("Districts page have invalid format.")))
       } else {
         val districtsJs = districtsJsonAsOpt.get.value.toList
 
         if (districtsJs.exists(j => (j \ "Text").asOpt[String].isEmpty || (j \ "Value").asOpt[String].flatMap(s => Try(s.toInt).toOption).isEmpty)) {
-          Log.error(s"""Failed to parse districts for city "$cityId". Found some invalid districts in page: $page""", "DistrictExtractor")
+          Log.error(s"""Failed to parse districts for city "$cityId". Found some invalid districts in page: $page""", "DistrictExtractor.parseDistricts")
           Left(Errors(SingleError.InvalidData.withDetails("Invalid districts are found in page.")))
         } else {
           val districts = districtsJs map {
@@ -69,7 +69,7 @@ object DistrictExtractor {
       }
     } catch {
       case t: Throwable =>
-        Log.throwable(t, s"""Failed to parse districts for city "$cityId"!""", "DistrictExtractor")
+        Log.throwable(t, s"""Failed to parse districts for city "$cityId"!""", "DistrictExtractor.parseDistricts")
         Left(Errors(SingleError.RequestFailed.withDetails(s"""Failed to parse districts for city "$cityId"!""")))
     }
   }

@@ -34,7 +34,7 @@ object District extends {
    * @return Some errors or a list of districts
    */
   def getAllFromDatabase(cityId: Int): Either[Errors, List[District]] = {
-    Log.debug(s"""Getting all districts for city "$cityId" from database...""", "District")
+    Log.debug(s"""Getting all districts for city "$cityId" from database...""", "District.getAllFromDatabase")
 
     try {
       val sql = anorm.SQL("SELECT * FROM District WHERE cityId = {cityId} ORDER BY name").on("cityId" -> cityId)
@@ -50,7 +50,7 @@ object District extends {
       Right(districtList)
     } catch {
       case t: Throwable =>
-        Log.throwable(t, s"""Failed to get all districts for city "$cityId" from database!""", "District")
+        Log.throwable(t, s"""Failed to get all districts for city "$cityId" from database!""", "District.getAllFromDatabase")
         Left(Errors(SingleError.Database.withDetails(s"""Failed to get all districts for city "$cityId" from database!""")))
     }
   }
@@ -65,10 +65,10 @@ object District extends {
   def saveAllToDatabase(districts: List[District]): Errors = {
     try {
       if (districts.isEmpty) {
-        Log.warn("Not saving empty list of districts...", "District")
+        Log.warn("Not saving empty list of districts...", "District.saveAllToDatabase")
         Errors.empty
       } else {
-        Log.debug(s"""Saving all districts to database...""", "District")
+        Log.debug(s"""Saving all districts to database...""", "District.saveAllToDatabase")
 
         val valuesToParameters: List[(String, List[NamedParameter])] = districts.zipWithIndex.foldLeft(List.empty[(String, List[NamedParameter])]) {
           case (valuesToParameters: List[(String, List[NamedParameter])], (district: District, index: Int)) =>
@@ -95,7 +95,7 @@ object District extends {
         val savedCount = Database.executeUpdate(sql)
 
         if (savedCount != districts.size) {
-          Log.error(s"""Failed to save ${districts.size} districts to database, affected row count was $savedCount!""", "District")
+          Log.error(s"""Failed to save ${districts.size} districts to database, affected row count was $savedCount!""", "District.saveAllToDatabase")
           Errors(SingleError.Database.withDetails("Failed to save some districts to database!"))
         } else {
           Errors.empty
@@ -103,7 +103,7 @@ object District extends {
       }
     } catch {
       case t: Throwable =>
-        Log.throwable(t, s"""Failed to save ${districts.size} districts to database!""", "District")
+        Log.throwable(t, s"""Failed to save ${districts.size} districts to database!""", "District.saveAllToDatabase")
         Errors(SingleError.Database.withDetails("Failed to save all districts to database!"))
     }
   }

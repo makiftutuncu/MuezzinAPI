@@ -130,7 +130,7 @@ object PrayerTimesController extends MuezzinAPIController {
     val countryIdAsOpt = Try(country.toInt).toOption
 
     if (countryIdAsOpt.isEmpty) {
-      Log.error(s"""Failed to get cities for country "$country", country id is invalid!""", "PrayerTimes")
+      Log.error(s"""Failed to get cities for country "$country", country id is invalid!""", "PrayerTimes.getCities")
       futureErrorResponse(Errors(SingleError.InvalidData.withValue(country).withDetails("Country id is invalid.")))
     } else {
       val countryId = countryIdAsOpt.get
@@ -212,7 +212,7 @@ object PrayerTimesController extends MuezzinAPIController {
     val cityIdAsOpt = Try(city.toInt).toOption
 
     if (cityIdAsOpt.isEmpty) {
-      Log.error(s"""Failed to get districts for city "$city", city id is invalid!""", "PrayerTimes")
+      Log.error(s"""Failed to get districts for city "$city", city id is invalid!""", "PrayerTimes.getDistricts")
       futureErrorResponse(Errors(SingleError.InvalidData.withValue(city).withDetails("City id is invalid.")))
     } else {
       val cityId = cityIdAsOpt.get
@@ -309,7 +309,7 @@ object PrayerTimesController extends MuezzinAPIController {
     val countryIdAsOpt = Try(country.toInt).toOption
 
     if (countryIdAsOpt.isEmpty) {
-      Log.error(s"""Failed to get prayer times for country "$country", city "$city" and district "$district", country id is invalid!""", "PrayerTimes")
+      Log.error(s"""Failed to get prayer times for country "$country", city "$city" and district "$district", country id is invalid!""", "PrayerTimes.getPrayerTimes")
       futureErrorResponse(Errors(SingleError.InvalidData.withValue(country).withDetails("Country id is invalid.")))
     } else {
       val countryId: Int = countryIdAsOpt.get
@@ -317,7 +317,7 @@ object PrayerTimesController extends MuezzinAPIController {
       val cityIdAsOpt = Try(city.toInt).toOption
 
       if (cityIdAsOpt.isEmpty) {
-        Log.error(s"""Failed to get prayer times for country "$country", city "$city" and district "$district", city id is invalid!""", "PrayerTimes")
+        Log.error(s"""Failed to get prayer times for country "$country", city "$city" and district "$district", city id is invalid!""", "PrayerTimes.getPrayerTimes")
         futureErrorResponse(Errors(SingleError.InvalidData.withValue(city).withDetails("City id is invalid.")))
       } else {
         val cityId: Int = cityIdAsOpt.get

@@ -21,40 +21,40 @@ object Conf {
   /** Broom related configuration */
   object Broom {
     /** Switch to enable/disable broom */
-    val broomEnabled: Boolean = getBoolean("muezzin.broom.enabled", defaultValue = true)
+    val enabled: Boolean = getBoolean("muezzin.broom.enabled", defaultValue = true)
 
     /** Interval for broom, to delete old data on a regular basis, 1 day by default */
-    val broomInterval: FiniteDuration = FiniteDuration(getInt("muezzin.broom.interval", 1), duration.DAYS)
+    val interval: FiniteDuration = FiniteDuration(getInt("muezzin.broom.interval", 1), duration.DAYS)
 
     /** Strength of broom, the stronger it gets, the further back it deletes data.
       * It would only be effective if this value is greater than interval. 1 day by default */
-    val broomStrength: FiniteDuration = FiniteDuration(getInt("muezzin.broom.strength", 1), duration.DAYS)
+    val strength: FiniteDuration = FiniteDuration(getInt("muezzin.broom.strength", 1), duration.DAYS)
   }
 
   /** Heartbeat related configuration */
   object Heartbeat {
     /** Switch to enable/disable heartbeat */
-    val heartbeatEnabled: Boolean = getBoolean("muezzin.heartbeat.enabled", defaultValue = false)
+    val enabled: Boolean = getBoolean("muezzin.heartbeat.enabled", defaultValue = false)
 
     /** Interval to heartbeat, to keep server awake by sending a request to self, 20 minutes by default */
-    val heartbeatInterval: FiniteDuration = FiniteDuration(getInt("muezzin.heartbeat.interval", 20), duration.MINUTES)
+    val interval: FiniteDuration = FiniteDuration(getInt("muezzin.heartbeat.interval", 20), duration.MINUTES)
 
     /** Initial delay to run heartbeat, 5 minute by default */
-    val heartbeatInitialDelay: FiniteDuration = FiniteDuration(getInt("muezzin.heartbeat.initialDelay", 5), duration.MINUTES)
+    val initialDelay: FiniteDuration = FiniteDuration(getInt("muezzin.heartbeat.initialDelay", 5), duration.MINUTES)
   }
 
   /** URL related configurations */
   object Url {
     /** Muezzin APIs own URL */
-    val self = getString("muezzin.url.self", "https://muezzin.herokuapp.com")
+    val self = getString("muezzin.url.self", "INVALID_URL")
     /** URL to get countries */
-    val countries = getString("muezzin.url.countries", "http://www.diyanet.gov.tr/tr/PrayerTime/WorldPrayerTimes")
+    val countries = getString("muezzin.url.countries", "INVALID_URL")
     /** URL to get cities */
-    val cities = getString("muezzin.url.cities", "http://www.diyanet.gov.tr/PrayerTime/FillState?countryCode=%d")
+    val cities = getString("muezzin.url.cities", "INVALID_URL")
     /** URL to get districts */
-    val districts = getString("muezzin.url.districts", "http://www.diyanet.gov.tr/PrayerTime/FillCity?itemId=%d")
+    val districts = getString("muezzin.url.districts", "INVALID_URL")
     /** URL to get prayer times */
-    val prayerTimes = getString("muezzin.url.prayerTimes", "http://www.diyanet.gov.tr/tr/PrayerTime/PrayerTimesList")
+    val prayerTimes = getString("muezzin.url.prayerTimes", "INVALID_URL")
   }
 
   /**

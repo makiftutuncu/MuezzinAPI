@@ -32,7 +32,7 @@ object Country {
    * @return Some errors or a list of countries
    */
   def getAllFromDatabase: Either[Errors, List[Country]] = {
-    Log.debug(s"""Getting all countries from database...""", "Country")
+    Log.debug(s"""Getting all countries from database...""", "Country.getAllFromDatabase")
 
     try {
       val sql = anorm.SQL("SELECT * FROM Country ORDER BY name")
@@ -49,7 +49,7 @@ object Country {
       Right(countryList)
     } catch {
       case t: Throwable =>
-        Log.throwable(t, s"""Failed to get all countries from database!""", "Country")
+        Log.throwable(t, s"""Failed to get all countries from database!""", "Country.getAllFromDatabase")
         Left(Errors(SingleError.Database.withDetails("Failed to get all countries from database!")))
     }
   }
@@ -63,10 +63,10 @@ object Country {
    */
   def saveAllToDatabase(countries: List[Country]): Errors = {
     if (countries.isEmpty) {
-      Log.warn("Not saving empty list of countries...", "Country")
+      Log.warn("Not saving empty list of countries...", "Country.saveAllToDatabase")
       Errors.empty
     } else {
-      Log.debug(s"""Saving all countries to database...""", "Country")
+      Log.debug(s"""Saving all countries to database...""", "Country.saveAllToDatabase")
 
       try {
         val valuesToParameters: List[(String, List[NamedParameter])] = countries.zipWithIndex.foldLeft(List.empty[(String, List[NamedParameter])]) {
@@ -94,14 +94,14 @@ object Country {
         val savedCount = Database.executeUpdate(sql)
 
         if (savedCount != countries.size) {
-          Log.error(s"""Failed to save ${countries.size} countries to database, affected row count was $savedCount!""", "Country")
+          Log.error(s"""Failed to save ${countries.size} countries to database, affected row count was $savedCount!""", "Country.saveAllToDatabase")
           Errors(SingleError.Database.withDetails("Failed to save some countries to database!"))
         } else {
           Errors.empty
         }
       } catch {
         case t: Throwable =>
-          Log.throwable(t, s"""Failed to save ${countries.size} countries to database!""", "Country")
+          Log.throwable(t, s"""Failed to save ${countries.size} countries to database!""", "Country.saveAllToDatabase")
           Errors(SingleError.Database.withDetails("Failed to save all countries to database!"))
       }
     }

@@ -22,7 +22,7 @@ object Web {
    * @return Result as string or some errors
    */
   def getForHtml(url: String): Future[Either[Errors, String]] = {
-    Log.debug(s"Sending GET request for HTML to url: $url", "Web")
+    Log.debug(s"Sending GET request for HTML to url: $url", "Web.getForHtml")
 
     get[String](url) {
       response: WSResponse =>
@@ -30,10 +30,10 @@ object Web {
         val contentType: String = response.header("Content-Type").getOrElse("")
 
         if (status != Http.Status.OK) {
-          Log.error(s"GET request for HTML failed, received invalid status! url: $url, status: $status", "Web")
+          Log.error(s"GET request for HTML failed, received invalid status! url: $url, status: $status", "Web.getForHtml")
           Left(Errors(SingleError.RequestFailed.withValue("status").withDetails(status.toString)))
         } else if (!contentType.contains(MimeTypes.HTML)) {
-          Log.error(s"GET request for HTML failed, received invalid content type! url: $url, content type: $contentType", "Web")
+          Log.error(s"GET request for HTML failed, received invalid content type! url: $url, content type: $contentType", "Web.getForHtml")
           Left(Errors(SingleError.RequestFailed.withValue("contentType").withDetails(contentType)))
         } else {
           Right(response.body)
@@ -49,7 +49,7 @@ object Web {
    * @return Result as Json or some errors
    */
   def getForJson(url: String): Future[Either[Errors, JsValue]] = {
-    Log.debug(s"Sending GET request for Json to url: $url", "Web")
+    Log.debug(s"Sending GET request for Json to url: $url", "Web.getForJson")
 
     get[JsValue](url) {
       response: WSResponse =>
@@ -57,10 +57,10 @@ object Web {
         val contentType: String = response.header("Content-Type").getOrElse("")
 
         if (status != Http.Status.OK) {
-          Log.error(s"GET request for Json failed, received invalid status! url: $url, status: $status", "Web")
+          Log.error(s"GET request for Json failed, received invalid status! url: $url, status: $status", "Web.getForJson")
           Left(Errors(SingleError.RequestFailed.withValue("status").withDetails(status.toString)))
         } else if (!contentType.contains(MimeTypes.JSON)) {
-          Log.error(s"GET request for Json failed, received invalid content type! url: $url, content type: $contentType", "Web")
+          Log.error(s"GET request for Json failed, received invalid content type! url: $url, content type: $contentType", "Web.getForJson")
           Left(Errors(SingleError.RequestFailed.withValue("contentType").withDetails(contentType)))
         } else {
           Right(response.json)
@@ -77,7 +77,7 @@ object Web {
    * @return Result as string or some errors
    */
   def postForHtml(url: String, form: Map[String, Seq[String]] = Map.empty[String, Seq[String]]): Future[Either[Errors, String]] = {
-    Log.debug(s"Sending POST request for HTML with $form as body to url: $url", "Web")
+    Log.debug(s"Sending POST request for HTML with $form as body to url: $url", "Web.postFromHtml")
 
     post[Map[String, Seq[String]], String](url, form) {
       response: WSResponse =>
@@ -85,10 +85,10 @@ object Web {
         val contentType: String = response.header("Content-Type").getOrElse("")
 
         if (status != Http.Status.OK) {
-          Log.error(s"POST request for HTML with $form as body failed, received invalid status! url: $url, status: $status", "Web")
+          Log.error(s"POST request for HTML with $form as body failed, received invalid status! url: $url, status: $status", "Web.postFromHtml")
           Left(Errors(SingleError.RequestFailed.withValue("status").withDetails(status.toString)))
         } else if (!contentType.contains(MimeTypes.HTML)) {
-          Log.error(s"POST request for HTML with $form as body failed, received invalid content type! url: $url, content type: $contentType", "Web")
+          Log.error(s"POST request for HTML with $form as body failed, received invalid content type! url: $url, content type: $contentType", "Web.postFromHtml")
           Left(Errors(SingleError.RequestFailed.withValue("contentType").withDetails(contentType)))
         } else {
           Right(response.body)
@@ -105,7 +105,7 @@ object Web {
    * @return Result as string or some errors
    */
   def postForHtml(url: String, json: JsValue): Future[Either[Errors, String]] = {
-    Log.debug(s"Sending POST request for HTML with $json as body to url: $url", "Web")
+    Log.debug(s"Sending POST request for HTML with $json as body to url: $url", "Web.postForHtml")
 
     post[JsValue, String](url, json) {
       response: WSResponse =>
@@ -113,10 +113,10 @@ object Web {
         val contentType: String = response.header("Content-Type").getOrElse("")
 
         if (status != Http.Status.OK) {
-          Log.error(s"POST request for HTML with $json as body failed, received invalid status! url: $url, status: $status", "Web")
+          Log.error(s"POST request for HTML with $json as body failed, received invalid status! url: $url, status: $status", "Web.postForHtml")
           Left(Errors(SingleError.RequestFailed.withValue("status").withDetails(status.toString)))
         } else if (!contentType.contains(MimeTypes.HTML)) {
-          Log.error(s"POST request for HTML with $json as body failed, received invalid content type! url: $url, content type: $contentType", "Web")
+          Log.error(s"POST request for HTML with $json as body failed, received invalid content type! url: $url, content type: $contentType", "Web.postForHtml")
           Left(Errors(SingleError.RequestFailed.withValue("contentType").withDetails(contentType)))
         } else {
           Right(response.body)
@@ -133,7 +133,7 @@ object Web {
    * @return Result as Json or some errors
    */
   def postForJson(url: String, form: Map[String, Seq[String]] = Map.empty[String, Seq[String]]): Future[Either[Errors, JsValue]] = {
-    Log.debug(s"Sending POST request for HTML with $form as body to url: $url", "Web")
+    Log.debug(s"Sending POST request for HTML with $form as body to url: $url", "Web.postForJson")
 
     post[Map[String, Seq[String]], JsValue](url, form) {
       response: WSResponse =>
@@ -141,10 +141,10 @@ object Web {
         val contentType: String = response.header("Content-Type").getOrElse("")
 
         if (status != Http.Status.OK) {
-          Log.error(s"POST request for HTML with $form as body failed, received invalid status! url: $url, status: $status", "Web")
+          Log.error(s"POST request for HTML with $form as body failed, received invalid status! url: $url, status: $status", "Web.postForJson")
           Left(Errors(SingleError.RequestFailed.withValue("status").withDetails(status.toString)))
         } else if (!contentType.contains(MimeTypes.HTML)) {
-          Log.error(s"POST request for HTML with $form as body failed, received invalid content type! url: $url, content type: $contentType", "Web")
+          Log.error(s"POST request for HTML with $form as body failed, received invalid content type! url: $url, content type: $contentType", "Web.postForJson")
           Left(Errors(SingleError.RequestFailed.withValue("contentType").withDetails(contentType)))
         } else {
           Right(response.json)
@@ -161,7 +161,7 @@ object Web {
    * @return Result as Json or some errors
    */
   def postForJson(url: String, json: JsValue): Future[Either[Errors, JsValue]] = {
-    Log.debug(s"Sending POST request for HTML with $json as body to url: $url", "Web")
+    Log.debug(s"Sending POST request for HTML with $json as body to url: $url", "Web.postForJson")
 
     post[JsValue, JsValue](url, json) {
       response: WSResponse =>
@@ -169,10 +169,10 @@ object Web {
         val contentType: String = response.header("Content-Type").getOrElse("")
 
         if (status != Http.Status.OK) {
-          Log.error(s"POST request for HTML with $json as body failed, received invalid status! url: $url, status: $status", "Web")
+          Log.error(s"POST request for HTML with $json as body failed, received invalid status! url: $url, status: $status", "Web.postForJson")
           Left(Errors(SingleError.RequestFailed.withValue("status").withDetails(status.toString)))
         } else if (!contentType.contains(MimeTypes.HTML)) {
-          Log.error(s"POST request for HTML with $json as body failed, received invalid content type! url: $url, content type: $contentType", "Web")
+          Log.error(s"POST request for HTML with $json as body failed, received invalid content type! url: $url, content type: $contentType", "Web.postForJson")
           Left(Errors(SingleError.RequestFailed.withValue("contentType").withDetails(contentType)))
         } else {
           Right(response.json)
@@ -188,7 +188,7 @@ object Web {
    * @return Result as Json or some errors
    */
   def getJson(url: String): Future[Either[Errors, JsValue]] = {
-    Log.debug(s"Sending GET request to get Json from url: $url", "Web")
+    Log.debug(s"Sending GET request to get Json from url: $url", "Web.getJson")
 
     get[JsValue](url) {
       response: WSResponse =>
@@ -196,10 +196,10 @@ object Web {
         val contentType: String = response.header("Content-Type").getOrElse("")
 
         if (status != Http.Status.OK) {
-          Log.error(s"Failed to get Json, received invalid status! url: $url, status: $status", "Web")
+          Log.error(s"Failed to get Json, received invalid status! url: $url, status: $status", "Web.getJson")
           Left(Errors(SingleError.RequestFailed.withValue("status").withDetails(status.toString)))
         } else if (!contentType.contains(MimeTypes.JSON)) {
-          Log.error(s"Failed to get Json, received invalid content type! url: $url, content type: $contentType", "Web")
+          Log.error(s"Failed to get Json, received invalid content type! url: $url, content type: $contentType", "Web.getJson")
           Left(Errors(SingleError.RequestFailed.withValue("contentType").withDetails(contentType)))
         } else {
           Right(response.json)

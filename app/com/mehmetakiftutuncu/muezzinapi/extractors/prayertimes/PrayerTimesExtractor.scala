@@ -54,7 +54,7 @@ object PrayerTimesExtractor {
    */
   private def parsePrayerTimes(countryId: Int, cityId: Int, districtId: Option[Int], page: String): Either[Errors, List[PrayerTimes]] = {
     try {
-      Log.debug(s"""Parsing prayer times for country "$countryId", city "$cityId" and district "$districtId"...""", "PrayerTimesExtractor")
+      Log.debug(s"""Parsing prayer times for country "$countryId", city "$cityId" and district "$districtId"...""", "PrayerTimesExtractor.parsePrayerTimes")
 
       val prayerTimesTableRegex = """[\s\S]+<table.+?>([\s\S]+?)<\/table>[\s\S]+""".r
       val prayerTimesRowRegex   = """[\s\S]*?<tr>\s*?<td.+?>(.+?)</td>\s*?<td.+?>(.+?)</td>\s*?<td.+?>(.+?)</td>\s*?<td.+?>(.+?)</td>\s*?<td.+?>(.+?)</td>\s*?<td.+?>(.+?)</td>\s*?<td.+?>(.+?)</td>\s*?<td.+?>(.+?)</td>\s*?</tr>[\s\S]*?""".r
@@ -62,7 +62,7 @@ object PrayerTimesExtractor {
       val prayerTimesTableMatchAsOpt = prayerTimesTableRegex.findFirstMatchIn(page)
 
       if (prayerTimesTableMatchAsOpt.isEmpty || prayerTimesTableMatchAsOpt.get.groupCount < 1) {
-        Log.error(s"""Failed to parse prayer times for country "$countryId", city "$cityId" and district id "$districtId". Prayer times are not found in $page""", "PrayerTimesExtractor")
+        Log.error(s"""Failed to parse prayer times for country "$countryId", city "$cityId" and district id "$districtId". Prayer times are not found in $page""", "PrayerTimesExtractor.parsePrayerTimes")
         Left(Errors(SingleError.RequestFailed.withDetails("Prayer times are not found in page.")))
       } else {
         val prayerTimesTable = prayerTimesTableMatchAsOpt.get.group(1)
@@ -70,7 +70,7 @@ object PrayerTimesExtractor {
         val prayerTimesRows = prayerTimesRowRegex.findAllMatchIn(prayerTimesTable).toList
 
         if (prayerTimesRows.isEmpty || prayerTimesRows.exists(m => m.groupCount < 8)) {
-          Log.error(s"""Failed to parse prayer times for country "$countryId", city "$cityId" and district id "$districtId". Found some invalid prayer times in $page""", "PrayerTimesExtractor")
+          Log.error(s"""Failed to parse prayer times for country "$countryId", city "$cityId" and district id "$districtId". Found some invalid prayer times in $page""", "PrayerTimesExtractor.parsePrayerTimes")
           Left(Errors(SingleError.InvalidData.withDetails("Invalid prayer times are not found in page.")))
         } else {
           val prayerTimes = prayerTimesRows map {
@@ -103,7 +103,7 @@ object PrayerTimesExtractor {
       }
     } catch {
       case t: Throwable =>
-        Log.throwable(t, s"""Failed to parse prayer times for country "$countryId", city "$cityId" and district "$districtId"!""", "PrayerTimesExtractor")
+        Log.throwable(t, s"""Failed to parse prayer times for country "$countryId", city "$cityId" and district "$districtId"!""", "PrayerTimesExtractor.parsePrayerTimes")
         Left(Errors(SingleError.RequestFailed.withDetails(s"""Failed to parse prayer times for country "$countryId", city "$cityId" and district "$districtId"!""")))
     }
   }

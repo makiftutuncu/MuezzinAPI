@@ -40,18 +40,18 @@ object CityExtractor {
    */
   private def parseCities(countryId: Int, page: JsValue): Either[Errors, List[City]] = {
     try {
-      Log.debug(s"""Parsing cities for country "$countryId"...""", "CityExtractor")
+      Log.debug(s"""Parsing cities for country "$countryId"...""", "CityExtractor.parseCities")
 
       val citiesJsonAsOpt = page.asOpt[JsArray]
 
       if (citiesJsonAsOpt.isEmpty) {
-        Log.error(s"""Failed to parse cities for country "$countryId". Page has invalid format: $page""", "CityExtractor")
+        Log.error(s"""Failed to parse cities for country "$countryId". Page has invalid format: $page""", "CityExtractor.parseCities")
         Left(Errors(SingleError.InvalidData.withDetails("Cities page have invalid format.")))
       } else {
         val citiesJs = citiesJsonAsOpt.get.value.toList
 
         if (citiesJs.exists(j => (j \ "Text").asOpt[String].isEmpty || (j \ "Value").asOpt[String].flatMap(s => Try(s.toInt).toOption).isEmpty)) {
-          Log.error(s"""Failed to parse cities for country "$countryId". Found some invalid cities in page: $page""", "CityExtractor")
+          Log.error(s"""Failed to parse cities for country "$countryId". Found some invalid cities in page: $page""", "CityExtractor.parseCities")
           Left(Errors(SingleError.InvalidData.withDetails("Invalid cities are found in page.")))
         } else {
           val cities = citiesJs map {
@@ -70,7 +70,7 @@ object CityExtractor {
       }
     } catch {
       case t: Throwable =>
-        Log.throwable(t, s"""Failed to parse cities for country "$countryId"!""", "CityExtractor")
+        Log.throwable(t, s"""Failed to parse cities for country "$countryId"!""", "CityExtractor.parseCities")
         Left(Errors(SingleError.RequestFailed.withDetails(s"""Failed to parse cities for country "$countryId"!""")))
     }
   }
