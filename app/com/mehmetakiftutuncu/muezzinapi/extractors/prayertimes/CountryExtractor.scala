@@ -35,7 +35,7 @@ object CountryExtractor {
    */
   private def parseCountries(page: String): Either[Errors, List[Country]] = {
     try {
-      Log.debug(s"""Parsing countries...""", "CountryExtractor")
+      Log.debug(s"""Parsing countries...""", "CountryExtractor.parseCountries")
 
       val countriesSelectRegex = """[\s\S]+<select.+?id="Country".+?>([\s\S]+?)<\/select>[\s\S]+""".r
       val countryOptionRegex   = """[\s\S]*?<option.+?value="(\d+)".*?>(.+?)<\/option>[\s\S]*?""".r
@@ -43,7 +43,7 @@ object CountryExtractor {
       val countriesSelectMatchAsOpt = countriesSelectRegex.findFirstMatchIn(page)
 
       if (countriesSelectMatchAsOpt.isEmpty || countriesSelectMatchAsOpt.get.groupCount < 1) {
-        Log.error("Failed to parse countries. Countries are not found in page: " + page, "CountryExtractor")
+        Log.error("Failed to parse countries. Countries are not found in page: " + page, "CountryExtractor.parseCountries")
         Left(Errors(SingleError.RequestFailed.withDetails("Countries are not found in page.")))
       } else {
         val countriesSelect = countriesSelectMatchAsOpt.get.group(1)
@@ -51,7 +51,7 @@ object CountryExtractor {
         val countryOptions = countryOptionRegex.findAllMatchIn(countriesSelect).toList
 
         if (countryOptions.isEmpty || countryOptions.exists(m => m.groupCount < 2)) {
-          Log.error("Failed to parse countries. Found some invalid countries in page: " + page, "CountryExtractor")
+          Log.error("Failed to parse countries. Found some invalid countries in page: " + page, "CountryExtractor.parseCountries")
           Left(Errors(SingleError.InvalidData.withDetails("Invalid countries are not found in page.")))
         } else {
           val countryList = countryOptions map {
@@ -71,7 +71,7 @@ object CountryExtractor {
       }
     } catch {
       case t: Throwable =>
-        Log.throwable(t, s"""Failed to parse countries!""", "CountryExtractor")
+        Log.throwable(t, s"""Failed to parse countries!""", "CountryExtractor.parseCountries")
         Left(Errors(SingleError.RequestFailed.withDetails(s"""Failed to parse countries!""")))
     }
   }

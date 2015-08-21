@@ -3,7 +3,7 @@ package com.mehmetakiftutuncu.muezzinapi.models.prayertimes
 import anorm.NamedParameter
 import com.mehmetakiftutuncu.muezzinapi.models.base.Jsonable
 import com.mehmetakiftutuncu.muezzinapi.utilities.error.{Errors, SingleError}
-import com.mehmetakiftutuncu.muezzinapi.utilities.{Database, Log}
+import com.mehmetakiftutuncu.muezzinapi.utilities.{Conf, Database, Log}
 import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.json.{JsValue, Json}
 
@@ -64,7 +64,7 @@ object PrayerTimes {
    * @return Some errors or a list of prayer times
    */
   def getAllFromDatabase(countryId: Int, cityId: Int, districtId: Option[Int]): Either[Errors, List[PrayerTimes]] = {
-    Log.debug(s"""Getting prayer times for country "$countryId", city "$cityId" and district id "$districtId" from database...""", "PrayerTimes")
+    Log.debug(s"""Getting prayer times for country "$countryId", city "$cityId" and district id "$districtId" from database...""", "PrayerTimes.getAllFromDatabase")
 
     try {
       val sql = anorm.SQL(
@@ -94,7 +94,7 @@ object PrayerTimes {
       Right(prayerTimesList)
     } catch {
       case t: Throwable =>
-        Log.throwable(t, s"""Failed to prayer times for country "$countryId", city "$cityId" and district id "$districtId" from database!""", "PrayerTimes")
+        Log.throwable(t, s"""Failed to prayer times for country "$countryId", city "$cityId" and district id "$districtId" from database!""", "PrayerTimes.getAllFromDatabase")
         Left(Errors(SingleError.Database.withDetails(s"""Failed to prayer times for country "$countryId", city "$cityId" and district id "$districtId" from database!""")))
     }
   }
@@ -109,10 +109,10 @@ object PrayerTimes {
   def saveAllToDatabase(prayerTimesList: List[PrayerTimes]): Errors = {
     try {
       if (prayerTimesList.isEmpty) {
-        Log.warn("Not saving empty list of prayer times...", "PrayerTimes")
+        Log.warn("Not saving empty list of prayer times...", "PrayerTimes.saveAllToDatabase")
         Errors.empty
       } else {
-        Log.debug(s"""Saving all prayer times to database...""", "PrayerTimes")
+        Log.debug(s"""Saving all prayer times to database...""", "PrayerTimes.saveAllToDatabase")
 
         val valuesToParameters: List[(String, List[NamedParameter])] = prayerTimesList.zipWithIndex.foldLeft(List.empty[(String, List[NamedParameter])]) {
           case (valuesToParameters: List[(String, List[NamedParameter])], (prayerTimes: PrayerTimes, index: Int)) =>
@@ -155,7 +155,7 @@ object PrayerTimes {
         val savedCount = Database.executeUpdate(sql)
 
         if (savedCount != prayerTimesList.size) {
-          Log.error(s"""Failed to save ${prayerTimesList.size} prayer times to database, affected row count was $savedCount!""", "PrayerTimes")
+          Log.error(s"""Failed to save ${prayerTimesList.size} prayer times to database, affected row count was $savedCount!""", "PrayerTimes.saveAllToDatabase")
           Errors(SingleError.Database.withDetails("Failed to save some cities to database!"))
         } else {
           Errors.empty
@@ -163,8 +163,41 @@ object PrayerTimes {
       }
     } catch {
       case t: Throwable =>
-        Log.throwable(t, s"""Failed to save ${prayerTimesList.size} prayer times to database!""", "PrayerTimes")
+        Log.throwable(t, s"""Failed to save ${prayerTimesList.size} prayer times to database!""", "PrayerTimes.saveAllToDatabase")
         Errors(SingleError.Database.withDetails("Failed to save all prayer times to database!"))
+    }
+  }
+
+  /**
+   * Deletes prayer times older than given day
+   *
+   * @param howManyDays Number of days to define if prayer times is old
+   *
+   * @return Some errors or number of deleted prayer times
+   */
+  def wipeOldPrayerTimes(howManyDays: Int = Conf.Broom.strength.toDays.toInt): Either[Errors, Int] = {
+    try {
+      val timestampLimit = DateTime.now()
+        .withHourOfDay(0)
+        .withMinuteOfHour(0)
+        .withSecondOfMinute(0)
+        .withMillisOfSecond(0)
+        .minusDays(howManyDays)
+        .getMillis / 1000
+
+      val sql = anorm.SQL(
+        """
+          |DELETE FROM PrayerTimes
+          |WHERE dayDate < {timestampLimit}
+        """.stripMargin).on("timestampLimit" -> timestampLimit)
+
+      val deletedRowCount = Database.executeUpdate(sql)
+
+      Right(deletedRowCount)
+    } catch {
+      case t: Throwable =>
+        Log.throwable(t, s"""Failed to wipe $howManyDays old prayer times!""", "PrayerTimes.wipeOldPrayerTimes")
+        Left(Errors(SingleError.Database.withDetails(s"""Failed to wipe $howManyDays old prayer times!""")))
     }
   }
 }

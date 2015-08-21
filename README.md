@@ -132,11 +132,11 @@ It returns a list of prayer times for a month belonging to given ```countryId```
 **Details**
 
 * **dayDate** is a timestamp value, representing the day. It has hours, minutes, seconds and milliseconds are set to 0. So you may format the date part as you wish.
-* **fajr, shuruq, dhuhr, asr, maghrib, isha and qibla** are timestamp values, representing the named times respectively. They are actually shifted **dayDate** values by certain hours and minutes. Date part is the same as **dayDate**. So you may format the time part as you wish.
+* **fajr, shuruq, dhuhr, asr, maghrib, isha** and **qibla** are timestamp values, representing the named times respectively. They are actually shifted **dayDate** values by certain hours and minutes. Date part is the same as **dayDate**. So you may format the time part as you wish.
 
 ****
 
-###List of Prayer Times of a Country and City with District
+###List of Prayer Times of a Country and City with No District
 #####Path: [```/prayetimes/<countryId>/<cityId>```](https://muezzin.herokuapp.com/prayertimes/118/16382)
 It returns a list of prayer times for a month belonging to given ```countryId``` and ```cityId``` with no ```districtId```. This endpoint should be used for cities that have no districts. Example is for Tunus, Al Qayrawan. Please note that there are no times available for past dates and more than 1 month future dates. Diyanet only provides 1 month of prayer times starting from current time. Therefore, it is client's responsibility to keep requested prayer times and request more whenever needed.
 
@@ -165,7 +165,7 @@ It returns a list of prayer times for a month belonging to given ```countryId```
 **Details**
 
 * **dayDate** is a timestamp value, representing the day. It has hours, minutes, seconds and milliseconds are set to 0. So you may format the date part as you wish.
-* **fajr, shuruq, dhuhr, asr, maghrib, isha and qibla** are timestamp values, representing the named times respectively. They are actually shifted **dayDate** values by certain hours and minutes. Date part is the same as **dayDate**. So you may format the time part as you wish.
+* **fajr, shuruq, dhuhr, asr, maghrib, isha** and **qibla** are timestamp values, representing the named times respectively. They are actually shifted **dayDate** values by certain hours and minutes. Date part is the same as **dayDate**. So you may format the time part as you wish.
 
 License
 --------------

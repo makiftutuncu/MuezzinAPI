@@ -34,7 +34,7 @@ object City {
    * @return Some errors or a list of cities
    */
   def getAllFromDatabase(countryId: Int): Either[Errors, List[City]] = {
-    Log.debug(s"""Getting all cities for country "$countryId" from database...""", "City")
+    Log.debug(s"""Getting all cities for country "$countryId" from database...""", "City.getAllFromDatabase")
 
     try {
       val sql = anorm.SQL("SELECT * FROM City WHERE countryId = {countryId} ORDER BY name").on("countryId" -> countryId)
@@ -50,7 +50,7 @@ object City {
       Right(cityList)
     } catch {
       case t: Throwable =>
-        Log.throwable(t, s"""Failed to get all cities for country "$countryId" from database!""", "City")
+        Log.throwable(t, s"""Failed to get all cities for country "$countryId" from database!""", "City.getAllFromDatabase")
         Left(Errors(SingleError.Database.withDetails(s"""Failed to get all cities for country "$countryId" from database!""")))
     }
   }
@@ -65,10 +65,10 @@ object City {
   def saveAllToDatabase(cities: List[City]): Errors = {
     try {
       if (cities.isEmpty) {
-        Log.warn("Not saving empty list of cities...", "City")
+        Log.warn("Not saving empty list of cities...", "City.saveAllToDatabase")
         Errors.empty
       } else {
-        Log.debug(s"""Saving all cities to database...""", "City")
+        Log.debug(s"""Saving all cities to database...""", "City.saveAllToDatabase")
 
         val valuesToParameters: List[(String, List[NamedParameter])] = cities.zipWithIndex.foldLeft(List.empty[(String, List[NamedParameter])]) {
           case (valuesToParameters: List[(String, List[NamedParameter])], (city: City, index: Int)) =>
@@ -95,7 +95,7 @@ object City {
         val savedCount = Database.executeUpdate(sql)
 
         if (savedCount != cities.size) {
-          Log.error(s"""Failed to save ${cities.size} cities to database, affected row count was $savedCount!""", "City")
+          Log.error(s"""Failed to save ${cities.size} cities to database, affected row count was $savedCount!""", "City.saveAllToDatabase")
           Errors(SingleError.Database.withDetails("Failed to save some cities to database!"))
         } else {
           Errors.empty
@@ -103,7 +103,7 @@ object City {
       }
     } catch {
       case t: Throwable =>
-        Log.throwable(t, s"""Failed to save ${cities.size} cities to database!""", "City")
+        Log.throwable(t, s"""Failed to save ${cities.size} cities to database!""", "City.saveAllToDatabase")
         Errors(SingleError.Database.withDetails("Failed to save all cities to database!"))
     }
   }
