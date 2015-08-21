@@ -1,39 +1,104 @@
 package com.mehmetakiftutuncu.muezzinapi.utilities
 
-import scala.concurrent.duration._
+import play.api.Play
+
+import scala.concurrent.duration
+import scala.concurrent.duration.FiniteDuration
 
 /**
  * A utility object holding some basic configuration values
  */
 object Conf {
   /** Timeout value for WS request, 10 seconds by default */
-  val wsTimeout: Int = 10000
+  val wsTimeout: Int = getInt("muezzin.timeout.ws", 10) * 1000
 
   /** Timeout value for database, 5 seconds by default */
-  val dbTimeout: Int = 5
+  val dbTimeout: Int = getInt("muezzin.timeout.db", 5)
 
-  /** Time to live value for cache entries, 1 day by default */
-  val cacheTTL: FiniteDuration = 1.day
+  /** Time to live value for cache entries, 24 hours by default */
+  val cacheTTL: FiniteDuration = FiniteDuration(getInt("muezzin.cache.ttl", 24), duration.HOURS)
 
-  /** Interval to heartbeat, to keep server awake by sending a request to self, 5 minutes by default */
-  val heartbeatInterval: FiniteDuration = 5.minutes
+  /** Broom related configuration */
+  object Broom {
+    /** Switch to enable/disable broom */
+    val broomEnabled: Boolean = getBoolean("muezzin.broom.enabled", defaultValue = true)
 
-  /** Initial delay to run heartbeat, 1 minute by default */
-  val heartbeatInitialDelay: FiniteDuration = 1.minute
+    /** Interval for broom, to delete old data on a regular basis, 1 day by default */
+    val broomInterval: FiniteDuration = FiniteDuration(getInt("muezzin.broom.interval", 1), duration.DAYS)
+
+    /** Strength of broom, the stronger it gets, the further back it deletes data.
+      * It would only be effective if this value is greater than interval. 1 day by default */
+    val broomStrength: FiniteDuration = FiniteDuration(getInt("muezzin.broom.strength", 1), duration.DAYS)
+  }
+
+  /** Heartbeat related configuration */
+  object Heartbeat {
+    /** Switch to enable/disable heartbeat */
+    val heartbeatEnabled: Boolean = getBoolean("muezzin.heartbeat.enabled", defaultValue = false)
+
+    /** Interval to heartbeat, to keep server awake by sending a request to self, 20 minutes by default */
+    val heartbeatInterval: FiniteDuration = FiniteDuration(getInt("muezzin.heartbeat.interval", 20), duration.MINUTES)
+
+    /** Initial delay to run heartbeat, 5 minute by default */
+    val heartbeatInitialDelay: FiniteDuration = FiniteDuration(getInt("muezzin.heartbeat.initialDelay", 5), duration.MINUTES)
+  }
+
+  /** URL related configurations */
+  object Url {
+    /** Muezzin APIs own URL */
+    val self = getString("muezzin.url.self", "https://muezzin.herokuapp.com")
+    /** URL to get countries */
+    val countries = getString("muezzin.url.countries", "http://www.diyanet.gov.tr/tr/PrayerTime/WorldPrayerTimes")
+    /** URL to get cities */
+    val cities = getString("muezzin.url.cities", "http://www.diyanet.gov.tr/PrayerTime/FillState?countryCode=%d")
+    /** URL to get districts */
+    val districts = getString("muezzin.url.districts", "http://www.diyanet.gov.tr/PrayerTime/FillCity?itemId=%d")
+    /** URL to get prayer times */
+    val prayerTimes = getString("muezzin.url.prayerTimes", "http://www.diyanet.gov.tr/tr/PrayerTime/PrayerTimesList")
+  }
 
   /**
-   * Some URLs to make requests to
+   * Gets an integer from configuration
+   *
+   * @param key          Key of configuration
+   * @param defaultValue Default value if an integer with given key is not found
+   *
+   * @return Integer from configuration with given key or the default value
    */
-  object Url {
-    /** Muezzin APIs own URL for heartbeat */
-    val self = "https://muezzin.herokuapp.com"
-    /** URL to get countries */
-    val countries = "http://www.diyanet.gov.tr/tr/PrayerTime/WorldPrayerTimes"
-    /** URL to get cities */
-    val cities = "http://www.diyanet.gov.tr/PrayerTime/FillState?countryCode=%d"
-    /** URL to get districts */
-    val districts = "http://www.diyanet.gov.tr/PrayerTime/FillCity?itemId=%d"
-    /** URL to get prayer times */
-    val prayerTimes = "http://www.diyanet.gov.tr/tr/PrayerTime/PrayerTimesList"
+  private def getInt(key: String, defaultValue: Int): Int = {
+    Play.maybeApplication.flatMap(_.configuration.getInt(key)) getOrElse {
+      Log.error(s"""Failed to get integer from configuration with key "$key", check your configuration!""", "Conf.getInt")
+      defaultValue
+    }
+  }
+
+  /**
+   * Gets a string from configuration
+   *
+   * @param key          Key of configuration
+   * @param defaultValue Default value if a string with given key is not found
+   *
+   * @return String from configuration with given key or the default value
+   */
+  private def getString(key: String, defaultValue: String): String = {
+    Play.maybeApplication.flatMap(_.configuration.getString(key)) getOrElse {
+      Log.error(s"""Failed to get string from configuration with key "$key", check your configuration!""", "Conf.getString")
+      defaultValue
+    }
+  }
+
+  /**
+   * Gets a boolean from configuration
+   *
+   * @param key          Key of configuration
+   * @param defaultValue Default value if an boolean with given key is not found
+   *
+   * @return Boolean from configuration with given key or the default value
+   */
+  private def getBoolean(key: String, defaultValue: Boolean): Boolean = {
+    Play.maybeApplication.flatMap(_.configuration.getBoolean(key)) getOrElse {
+      Log.error(s"""Failed to get boolean from configuration with key "$key", check your configuration!""", "Conf.getBoolean")
+      defaultValue
+    }
   }
 }
