@@ -217,7 +217,7 @@ object Web {
    *
    * @return A result of expected type or some errors
    */
-  private def get[R](url: String)(block: (WSResponse => Either[Errors, R])): Future[Either[Errors, R]] = {
+  def get[R](url: String)(block: (WSResponse => Either[Errors, R])): Future[Either[Errors, R]] = {
     WS.url(url).withRequestTimeout(Conf.wsTimeout).get() map {
       response: WSResponse =>
         block(response)
@@ -240,7 +240,7 @@ object Web {
    *
    * @return A result of expected type or some errors
    */
-  private def post[B, R](url: String, body: B)(block: (WSResponse => Either[Errors, R]))(implicit wrt: Writeable[B], ct: ContentTypeOf[B]): Future[Either[Errors, R]] = {
+  def post[B, R](url: String, body: B)(block: (WSResponse => Either[Errors, R]))(implicit wrt: Writeable[B], ct: ContentTypeOf[B]): Future[Either[Errors, R]] = {
     WS.url(url).withRequestTimeout(Conf.wsTimeout).post(body) map {
       response: WSResponse =>
         block(response)
