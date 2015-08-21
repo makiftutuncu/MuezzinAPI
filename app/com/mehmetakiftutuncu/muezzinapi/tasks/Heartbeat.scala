@@ -1,4 +1,4 @@
-package com.mehmetakiftutuncu.muezzinapi
+package com.mehmetakiftutuncu.muezzinapi.tasks
 
 import akka.actor.Actor
 import com.mehmetakiftutuncu.muezzinapi.utilities.{Conf, Log, Web}

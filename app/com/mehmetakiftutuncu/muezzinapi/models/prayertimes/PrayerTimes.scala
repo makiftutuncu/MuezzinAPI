@@ -3,7 +3,7 @@ package com.mehmetakiftutuncu.muezzinapi.models.prayertimes
 import anorm.NamedParameter
 import com.mehmetakiftutuncu.muezzinapi.models.base.Jsonable
 import com.mehmetakiftutuncu.muezzinapi.utilities.error.{Errors, SingleError}
-import com.mehmetakiftutuncu.muezzinapi.utilities.{Database, Log}
+import com.mehmetakiftutuncu.muezzinapi.utilities.{Conf, Database, Log}
 import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.json.{JsValue, Json}
 
@@ -165,6 +165,39 @@ object PrayerTimes {
       case t: Throwable =>
         Log.throwable(t, s"""Failed to save ${prayerTimesList.size} prayer times to database!""", "PrayerTimes.saveAllToDatabase")
         Errors(SingleError.Database.withDetails("Failed to save all prayer times to database!"))
+    }
+  }
+
+  /**
+   * Deletes prayer times older than given day
+   *
+   * @param howManyDays Number of days to define if prayer times is old
+   *
+   * @return Some errors or number of deleted prayer times
+   */
+  def wipeOldPrayerTimes(howManyDays: Int = Conf.Broom.strength.toDays.toInt): Either[Errors, Int] = {
+    try {
+      val timestampLimit = DateTime.now()
+        .withHourOfDay(0)
+        .withMinuteOfHour(0)
+        .withSecondOfMinute(0)
+        .withMillisOfSecond(0)
+        .minusDays(howManyDays)
+        .getMillis / 1000
+
+      val sql = anorm.SQL(
+        """
+          |DELETE FROM PrayerTimes
+          |WHERE dayTime < {timestampLimit}
+        """.stripMargin).on("timestampLimit" -> timestampLimit)
+
+      val deletedRowCount = Database.executeUpdate(sql)
+
+      Right(deletedRowCount)
+    } catch {
+      case t: Throwable =>
+        Log.throwable(t, s"""Failed to wipe $howManyDays old prayer times!""", "PrayerTimes.wipeOldPrayerTimes")
+        Left(Errors(SingleError.Database.withDetails(s"""Failed to wipe $howManyDays old prayer times!""")))
     }
   }
 }

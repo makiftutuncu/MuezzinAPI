@@ -1,6 +1,7 @@
 package com.mehmetakiftutuncu.muezzinapi
 
-import akka.actor.{Props, Scheduler}
+import akka.actor.{ActorSystem, Props, Scheduler}
+import com.mehmetakiftutuncu.muezzinapi.tasks.{Broom, Heartbeat}
 import com.mehmetakiftutuncu.muezzinapi.utilities.{Conf, Log}
 import play.api.libs.concurrent.Akka
 import play.api.mvc.RequestHeader
@@ -8,7 +9,8 @@ import play.api.mvc.Results._
 import play.api.{Application, GlobalSettings}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.{Future, duration}
 
 /**
  * Global configuration object of MuezzinAPI
@@ -17,13 +19,21 @@ object MuezzinAPIGlobal extends GlobalSettings {
   override def onStart(app: Application) {
     Log.warn("Starting Muezzin API...", "Global.onStart")
 
-    val scheduler: Scheduler = Akka.system(app).scheduler
+    val system: ActorSystem  = Akka.system(app)
+    val scheduler: Scheduler = system.scheduler
 
     // Schedule heartbeat if it is enabled
     if (Conf.Heartbeat.enabled) {
-      val heartbeat = Akka.system(app).actorOf(Props[Heartbeat], "heartbeat")
+      val heartbeat = system.actorOf(Props[Heartbeat], "heartbeat")
 
       scheduler.schedule(Conf.Heartbeat.initialDelay, Conf.Heartbeat.interval, heartbeat, "Wake up!")
+    }
+
+    // Schedule broom if it is enabled
+    if (Conf.Broom.enabled) {
+      val broom = system.actorOf(Props[Broom], "broom")
+
+      scheduler.schedule(FiniteDuration(0, duration.MILLISECONDS), Conf.Broom.interval, broom, "Wipe!")
     }
   }
 

@@ -27,8 +27,9 @@ object Conf {
     val interval: FiniteDuration = FiniteDuration(getInt("muezzin.broom.interval", 1), duration.DAYS)
 
     /** Strength of broom, the stronger it gets, the further back it deletes data.
-      * It would only be effective if this value is greater than interval. 1 day by default */
-    val strength: FiniteDuration = FiniteDuration(getInt("muezzin.broom.strength", 1), duration.DAYS)
+      * It would only be effective if this value is greater than interval.
+      * 0 day by default meaning data will start from current day */
+    val strength: FiniteDuration = FiniteDuration(getInt("muezzin.broom.strength", 0), duration.DAYS)
   }
 
   /** Heartbeat related configuration */
