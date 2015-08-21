@@ -26,9 +26,8 @@ object Conf {
     /** Interval for broom, to delete old data on a regular basis, 1 day by default */
     val interval: FiniteDuration = FiniteDuration(getInt("muezzin.broom.interval", 1), duration.DAYS)
 
-    /** Strength of broom, the stronger it gets, the further back it deletes data.
-      * It would only be effective if this value is greater than interval.
-      * 0 day by default meaning data will start from current day */
+    /** Strength of broom, it will keep data at most this old
+      * 0 days by default meaning data will start from current day, everything older than 0 days will be deleted */
     val strength: FiniteDuration = FiniteDuration(getInt("muezzin.broom.strength", 0), duration.DAYS)
   }
 

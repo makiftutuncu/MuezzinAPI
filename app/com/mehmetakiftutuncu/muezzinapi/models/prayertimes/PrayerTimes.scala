@@ -177,13 +177,7 @@ object PrayerTimes {
    */
   def wipeOldPrayerTimes(howManyDays: Int = Conf.Broom.strength.toDays.toInt): Either[Errors, Int] = {
     try {
-      val timestampLimit = DateTime.now()
-        .withHourOfDay(0)
-        .withMinuteOfHour(0)
-        .withSecondOfMinute(0)
-        .withMillisOfSecond(0)
-        .minusDays(howManyDays)
-        .getMillis / 1000
+      val timestampLimit = DateTime.now().withTime(0, 0, 0, 0).minusDays(howManyDays).getMillis / 1000
 
       val sql = anorm.SQL(
         """
