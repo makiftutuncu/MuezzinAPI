@@ -188,7 +188,7 @@ object PrayerTimes {
       val sql = anorm.SQL(
         """
           |DELETE FROM PrayerTimes
-          |WHERE dayTime < {timestampLimit}
+          |WHERE dayDate < {timestampLimit}
         """.stripMargin).on("timestampLimit" -> timestampLimit)
 
       val deletedRowCount = Database.executeUpdate(sql)
