@@ -37,8 +37,9 @@ It returns a list of all countries. The list will be sorted alphabetically by ``
     ... More here ...
     {
       "id": 2,
-      "name": "Turkey [Türkiye]",
-      "trName": "Türkiye"
+      "name": "Turkey",
+      "trName": "Türkiye",
+      "nativeName": "Türkiye"
     },
     ... More here ...
   ]
@@ -48,8 +49,9 @@ It returns a list of all countries. The list will be sorted alphabetically by ``
 **Details**
 
 * **id** is a number. It is id of the country that Diyanet uses.
-* **name** is the name of country as both English and native spelling.
+* **name** is the name of country in English.
 * **trName** is the name of the country in Turkish.
+* **nativeName** is the name of the country in their native language.
 
 ****
 
