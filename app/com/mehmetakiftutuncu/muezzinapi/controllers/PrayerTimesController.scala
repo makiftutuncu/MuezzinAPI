@@ -26,8 +26,9 @@ object PrayerTimesController extends MuezzinAPIController {
    *   "countries": [
    *     {
    *       "id": 2,
-   *       "name": "Turkey [Türkiye]",
-   *       "trName": "Türkiye"
+   *       "name": "Turkey",
+   *       "trName": "Türkiye",
+   *       "nativeName": "Türkiye",
    *     },
    *     ...
    *   ]

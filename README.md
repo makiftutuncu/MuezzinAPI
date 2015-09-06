@@ -27,7 +27,7 @@ All endpoints use ```GET```requests at the moment. When there is an error, an er
 ****
 
 ###List of Countries
-#####Path: [```/prayetimes/countries```](https://muezzin.herokuapp.com/prayertimes/countries)
+#####Path: [```/prayertimes/countries```](https://muezzin.herokuapp.com/prayertimes/countries)
 It returns a list of all countries. The list will be sorted alphabetically by ```name``` field.
 
 **Example Response**
@@ -37,8 +37,9 @@ It returns a list of all countries. The list will be sorted alphabetically by ``
     ... More here ...
     {
       "id": 2,
-      "name": "Turkey [Türkiye]",
-      "trName": "Türkiye"
+      "name": "Turkey",
+      "trName": "Türkiye",
+      "nativeName": "Türkiye"
     },
     ... More here ...
   ]
@@ -48,13 +49,14 @@ It returns a list of all countries. The list will be sorted alphabetically by ``
 **Details**
 
 * **id** is a number. It is id of the country that Diyanet uses.
-* **name** is the name of country as both English and native spelling.
+* **name** is the name of country in English.
 * **trName** is the name of the country in Turkish.
+* **nativeName** is the name of the country in their native language.
 
 ****
 
 ###List of Cities of a Country
-#####Path: [```/prayetimes/cities/<countryId>```](https://muezzin.herokuapp.com/prayertimes/cities/2)
+#####Path: [```/prayertimes/cities/<countryId>```](https://muezzin.herokuapp.com/prayertimes/cities/2)
 It returns a list of all cities of given ```countryId```. Example is for Turkey.
 
 **Example Response**
@@ -79,7 +81,7 @@ It returns a list of all cities of given ```countryId```. Example is for Turkey.
 ****
 
 ###List of Districts of a City
-#####Path: [```/prayetimes/districts/<cityId>```](https://muezzin.herokuapp.com/prayertimes/districts/540)
+#####Path: [```/prayertimes/districts/<cityId>```](https://muezzin.herokuapp.com/prayertimes/districts/540)
 It returns a list of all districts of given ```cityId```. Example is for İzmir. Please note that not every city has districts available. Diyanet only provides all of Turkey and some major cities.
 
 **Example Response**
@@ -104,7 +106,7 @@ It returns a list of all districts of given ```cityId```. Example is for İzmir.
 ****
 
 ###List of Prayer Times of a Country, City and District
-#####Path: [```/prayetimes/<countryId>/<cityId>/<districtId>```](https://muezzin.herokuapp.com/prayertimes/2/540/9560)
+#####Path: [```/prayertimes/<countryId>/<cityId>/<districtId>```](https://muezzin.herokuapp.com/prayertimes/2/540/9560)
 It returns a list of prayer times for a month belonging to given ```countryId```, ```cityId``` and ```districtId```. Example is for Turkey, İzmir, İzmir. If you do not have district for your country and city, use endpoint without district id (See below). Please note that there are no times available for past dates and more than 1 month future dates. Diyanet only provides 1 month of prayer times starting from current time. Therefore, it is client's responsibility to keep requested prayer times and request more whenever needed.
 
 **Example Response**
@@ -137,7 +139,7 @@ It returns a list of prayer times for a month belonging to given ```countryId```
 ****
 
 ###List of Prayer Times of a Country and City with No District
-#####Path: [```/prayetimes/<countryId>/<cityId>```](https://muezzin.herokuapp.com/prayertimes/118/16382)
+#####Path: [```/prayertimes/<countryId>/<cityId>```](https://muezzin.herokuapp.com/prayertimes/118/16382)
 It returns a list of prayer times for a month belonging to given ```countryId``` and ```cityId``` with no ```districtId```. This endpoint should be used for cities that have no districts. Example is for Tunus, Al Qayrawan. Please note that there are no times available for past dates and more than 1 month future dates. Diyanet only provides 1 month of prayer times starting from current time. Therefore, it is client's responsibility to keep requested prayer times and request more whenever needed.
 
 **Example Response**
