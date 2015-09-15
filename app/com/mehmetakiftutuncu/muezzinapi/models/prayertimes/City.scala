@@ -39,7 +39,7 @@ object City {
     try {
       val sql = anorm.SQL("SELECT * FROM City WHERE countryId = {countryId} ORDER BY name").on("countryId" -> countryId)
 
-      val cityList = Database.apply(sql) map {
+      val cityList = Database.applyWithConnection(sql) map {
         row =>
           val id: Int      = row[Int]("id")
           val name: String = row[String]("name")
@@ -85,14 +85,20 @@ object City {
             }
         }
 
-        val sql = anorm.SQL(
+        val deleteSql = anorm.SQL("DELETE FROM City")
+
+        val insertSql = anorm.SQL(
           s"""
              |INSERT INTO City (id, countryId, name)
              |VALUES ${valuesToParameters.map(_._1).mkString(", ")}
            """.stripMargin
           ).on(valuesToParameters.flatMap(_._2):_*)
 
-        val savedCount = Database.executeUpdate(sql)
+        val savedCount = Database.withTransaction {
+          implicit connection =>
+            Database.executeUpdate(deleteSql)
+            Database.executeUpdate(insertSql)
+        }
 
         if (savedCount != cities.size) {
           Log.error(s"""Failed to save ${cities.size} cities to database, affected row count was $savedCount!""", "City.saveAllToDatabase")
