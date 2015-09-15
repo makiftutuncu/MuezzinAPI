@@ -39,14 +39,14 @@ case class PrayerTimes(countryId: Int,
    * @return Json representation of this object
    */
   override def toJson: JsValue = Json.obj(
-    "dayDate" -> (dayDate.getMillis / 1000),
-    "fajr"    -> (fajr.getMillis    / 1000),
-    "shuruq"  -> (shuruq.getMillis  / 1000),
-    "dhuhr"   -> (dhuhr.getMillis   / 1000),
-    "asr"     -> (asr.getMillis     / 1000),
-    "maghrib" -> (maghrib.getMillis / 1000),
-    "isha"    -> (isha.getMillis    / 1000),
-    "qibla"   -> (qibla.getMillis   / 1000)
+    "dayDate" -> dayDate.getMillis,
+    "fajr"    -> fajr.getMillis,
+    "shuruq"  -> shuruq.getMillis,
+    "dhuhr"   -> dhuhr.getMillis,
+    "asr"     -> asr.getMillis,
+    "maghrib" -> maghrib.getMillis,
+    "isha"    -> isha.getMillis,
+    "qibla"   -> qibla.getMillis
   )
 }
 
@@ -77,7 +77,7 @@ object PrayerTimes {
           |ORDER BY dayDate
         """.stripMargin).on("countryId" -> countryId, "cityId" -> cityId, "districtId" -> districtId)
 
-      val prayerTimesList = Database.apply(sql) map {
+      val prayerTimesList = Database.applyWithConnection(sql) map {
         row =>
           val dayDate: DateTime = new DateTime(row[Long]("dayDate"), DateTimeZone.UTC)
           val fajr: DateTime    = new DateTime(row[Long]("fajr"),    DateTimeZone.UTC)
@@ -133,26 +133,51 @@ object PrayerTimes {
                 NamedParameter(countryIdKey,  prayerTimes.countryId),
                 NamedParameter(cityIdKey,     prayerTimes.cityId),
                 NamedParameter(districtIdKey, prayerTimes.districtId),
-                NamedParameter(dayDateKey,    prayerTimes.dayDate.getMillis / 1000),
-                NamedParameter(fajrKey,       prayerTimes.fajr.getMillis    / 1000),
-                NamedParameter(shuruqKey,     prayerTimes.shuruq.getMillis  / 1000),
-                NamedParameter(dhuhrKey,      prayerTimes.dhuhr.getMillis   / 1000),
-                NamedParameter(asrKey,        prayerTimes.asr.getMillis     / 1000),
-                NamedParameter(maghribKey,    prayerTimes.maghrib.getMillis / 1000),
-                NamedParameter(ishaKey,       prayerTimes.isha.getMillis    / 1000),
-                NamedParameter(qiblaKey,      prayerTimes.qibla.getMillis   / 1000)
+                NamedParameter(dayDateKey,    prayerTimes.dayDate.getMillis),
+                NamedParameter(fajrKey,       prayerTimes.fajr.getMillis),
+                NamedParameter(shuruqKey,     prayerTimes.shuruq.getMillis),
+                NamedParameter(dhuhrKey,      prayerTimes.dhuhr.getMillis),
+                NamedParameter(asrKey,        prayerTimes.asr.getMillis),
+                NamedParameter(maghribKey,    prayerTimes.maghrib.getMillis),
+                NamedParameter(ishaKey,       prayerTimes.isha.getMillis),
+                NamedParameter(qiblaKey,      prayerTimes.qibla.getMillis)
               )
             }
         }
 
-        val sql = anorm.SQL(
+        val valuesToParametersForDelete: List[(String, List[NamedParameter])] = prayerTimesList.zipWithIndex.foldLeft(List.empty[(String, List[NamedParameter])]) {
+          case (valuesToParameters: List[(String, List[NamedParameter])], (prayerTimes: PrayerTimes, index: Int)) =>
+            val countryIdKey: String  = s"countryId$index"
+            val cityIdKey: String     = s"cityId$index"
+            val districtIdKey: String = s"districtId$index"
+
+            valuesToParameters :+ {
+              s"(countryId = {countryId$index} AND cityId = {cityId$index} AND districtId = {districtId$index})" -> List(
+                NamedParameter(countryIdKey,  prayerTimes.countryId),
+                NamedParameter(cityIdKey,     prayerTimes.cityId),
+                NamedParameter(districtIdKey, prayerTimes.districtId)
+              )
+            }
+        }
+
+        val deleteSql = anorm.SQL(
+          s"""
+             |DELETE FROM PrayerTimes ${valuesToParametersForDelete.map(_._1).mkString("WHERE (", " OR ", ")")}
+           """.stripMargin
+        ).on(valuesToParametersForDelete.flatMap(_._2):_*)
+
+        val insertSql = anorm.SQL(
           s"""
              |INSERT INTO PrayerTimes (countryId, cityId, districtId, dayDate, fajr, shuruq, dhuhr, asr, maghrib, isha, qibla)
              |VALUES ${valuesToParameters.map(_._1).mkString(", ")}
            """.stripMargin
         ).on(valuesToParameters.flatMap(_._2):_*)
 
-        val savedCount = Database.executeUpdate(sql)
+        val savedCount = Database.withTransaction {
+          implicit connection =>
+            Database.executeUpdate(deleteSql)
+            Database.executeUpdate(insertSql)
+        }
 
         if (savedCount != prayerTimesList.size) {
           Log.error(s"""Failed to save ${prayerTimesList.size} prayer times to database, affected row count was $savedCount!""", "PrayerTimes.saveAllToDatabase")
@@ -177,7 +202,7 @@ object PrayerTimes {
    */
   def wipeOldPrayerTimes(howManyDays: Int = Conf.Broom.strength.toDays.toInt): Either[Errors, Int] = {
     try {
-      val timestampLimit = DateTime.now().withTime(0, 0, 0, 0).minusDays(howManyDays).getMillis / 1000
+      val timestampLimit = DateTime.now().withTime(0, 0, 0, 0).minusDays(howManyDays).getMillis
 
       val sql = anorm.SQL(
         """
@@ -185,7 +210,7 @@ object PrayerTimes {
           |WHERE dayDate < {timestampLimit}
         """.stripMargin).on("timestampLimit" -> timestampLimit)
 
-      val deletedRowCount = Database.executeUpdate(sql)
+      val deletedRowCount = Database.executeUpdateWithConnection(sql)
 
       Right(deletedRowCount)
     } catch {

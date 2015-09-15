@@ -10,4 +10,8 @@ object Application extends MuezzinAPIController {
   def index = Action {
     Ok("Welcome to Muezzin API!")
   }
+
+  def favicon = Action {
+    Ok
+  }
 }

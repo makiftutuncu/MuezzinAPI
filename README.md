@@ -27,7 +27,7 @@ All endpoints use ```GET```requests at the moment. When there is an error, an er
 ****
 
 ###List of Countries
-#####Path: [```/prayertimes/countries```](https://muezzin.herokuapp.com/prayertimes/countries)
+#####Path: [```/countries```](https://muezzin.herokuapp.com/countries)
 It returns a list of all countries. The list will be sorted alphabetically by ```name``` field.
 
 **Example Response**
@@ -56,7 +56,7 @@ It returns a list of all countries. The list will be sorted alphabetically by ``
 ****
 
 ###List of Cities of a Country
-#####Path: [```/prayertimes/cities/<countryId>```](https://muezzin.herokuapp.com/prayertimes/cities/2)
+#####Path: [```/<countryId>/cities```](https://muezzin.herokuapp.com/2/cities)
 It returns a list of all cities of given ```countryId```. Example is for Turkey.
 
 **Example Response**
@@ -81,7 +81,7 @@ It returns a list of all cities of given ```countryId```. Example is for Turkey.
 ****
 
 ###List of Districts of a City
-#####Path: [```/prayertimes/districts/<cityId>```](https://muezzin.herokuapp.com/prayertimes/districts/540)
+#####Path: [```/<cityId>/districts```](https://muezzin.herokuapp.com/540/districts)
 It returns a list of all districts of given ```cityId```. Example is for İzmir. Please note that not every city has districts available. Diyanet only provides all of Turkey and some major cities.
 
 **Example Response**
@@ -139,7 +139,7 @@ It returns a list of prayer times for a month belonging to given ```countryId```
 ****
 
 ###List of Prayer Times of a Country and City with No District
-#####Path: [```/prayertimes/<countryId>/<cityId>```](https://muezzin.herokuapp.com/prayertimes/118/16382)
+#####Path: [```/prayertimes/<countryId>/<cityId>/None```](https://muezzin.herokuapp.com/prayertimes/118/16382/None)
 It returns a list of prayer times for a month belonging to given ```countryId``` and ```cityId``` with no ```districtId```. This endpoint should be used for cities that have no districts. Example is for Tunus, Al Qayrawan. Please note that there are no times available for past dates and more than 1 month future dates. Diyanet only provides 1 month of prayer times starting from current time. Therefore, it is client's responsibility to keep requested prayer times and request more whenever needed.
 
 **Example Response**
@@ -168,6 +168,10 @@ It returns a list of prayer times for a month belonging to given ```countryId```
 
 * **dayDate** is a timestamp value, representing the day. It has hours, minutes, seconds and milliseconds are set to 0. So you may format the date part as you wish.
 * **fajr, shuruq, dhuhr, asr, maghrib, isha** and **qibla** are timestamp values, representing the named times respectively. They are actually shifted **dayDate** values by certain hours and minutes. Date part is the same as **dayDate**. So you may format the time part as you wish.
+
+****
+
+Note that by appending ```/force``` At the end of URL of any request above, you may bypass cache and database and make Muezzin API download related data from scratch. However, the request will be slower and using this is not recommended unless you **absolutely** have to. The reason is the fact that Muezzin API runs on very limited resources on Heroku. Thank you for your understanding.
 
 License
 --------------

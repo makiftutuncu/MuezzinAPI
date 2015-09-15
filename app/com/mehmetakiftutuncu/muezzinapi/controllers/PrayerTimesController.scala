@@ -7,9 +7,10 @@ import com.mehmetakiftutuncu.muezzinapi.models.prayertimes.{City, Country, Distr
 import com.mehmetakiftutuncu.muezzinapi.utilities.Log
 import com.mehmetakiftutuncu.muezzinapi.utilities.error.{Errors, SingleError}
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.Action
+import play.api.mvc.{Result, Action}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.util.Try
 
 /**
@@ -18,6 +19,8 @@ import scala.util.Try
 object PrayerTimesController extends MuezzinAPIController {
   /**
    * Gets a list of available countries
+   *
+   * @param force If this equals to "true" as String, cache and database will be bypassed
    *
    * @return When successful, a Json like following
    *
@@ -50,39 +53,23 @@ object PrayerTimesController extends MuezzinAPIController {
    * }
    * }}}
    */
-  def getCountries = Action.async {
-    def getResult(countries: List[Country]): JsValue = {
-      Json.obj("countries" -> Json.toJson(countries.map(_.toJson)))
-    }
-
-    val key = "prayertimes.countries"
-
-    val errorsOrCountries = Data.get[List[Country]](key) {
-      Country.getAllFromDatabase
-    }
-
-    if (errorsOrCountries.isLeft) {
-      futureErrorResponse(errorsOrCountries.left.get)
+  def getCountries(force: String) = Action.async {
+    if (Try(force.toBoolean).getOrElse(false)) {
+      extractCountries()
     } else {
-      val countries = errorsOrCountries.right.get
+      val errorsOrCountries = Data.get[List[Country]](countriesCacheKey) {
+        Country.getAllFromDatabase
+      }
 
-      if (countries.nonEmpty) {
-        futureJsonResponse(getResult(countries))
+      if (errorsOrCountries.isLeft) {
+        futureErrorResponse(errorsOrCountries.left.get)
       } else {
-        CountryExtractor.extractCountries() map {
-          case Left(extractErrors) =>
-            errorResponse(extractErrors)
+        val countries = errorsOrCountries.right.get
 
-          case Right(extractedCountries) =>
-            val saveErrors = Data.save[List[Country]](key, extractedCountries) {
-              Country.saveAllToDatabase(extractedCountries)
-            }
-
-            if (saveErrors.hasErrors) {
-              errorResponse(saveErrors)
-            } else {
-              jsonResponse(getResult(extractedCountries))
-            }
+        if (countries.nonEmpty) {
+          futureJsonResponse(countriesResult(countries))
+        } else {
+          extractCountries()
         }
       }
     }
@@ -92,6 +79,7 @@ object PrayerTimesController extends MuezzinAPIController {
    * Gets a list of available cities for given country
    *
    * @param country Id of the country, a number
+   * @param force   If this equals to "true" as String, cache and database will be bypassed
    *
    * @return When successful, a Json like following
    *
@@ -123,11 +111,7 @@ object PrayerTimesController extends MuezzinAPIController {
    * }
    * }}}
    */
-  def getCities(country: String) = Action.async {
-    def getResult(countryId: Int, cities: List[City]): JsValue = {
-      Json.obj("countryId" -> countryId, "cities" -> Json.toJson(cities.map(_.toJson)))
-    }
-
+  def getCities(country: String, force: String) = Action.async {
     val countryIdAsOpt = Try(country.toInt).toOption
 
     if (countryIdAsOpt.isEmpty) {
@@ -136,34 +120,22 @@ object PrayerTimesController extends MuezzinAPIController {
     } else {
       val countryId = countryIdAsOpt.get
 
-      val key = s"prayertimes.cities.$countryId"
-
-      val errorsOrCities = Data.get[List[City]](key) {
-        City.getAllFromDatabase(countryId)
-      }
-
-      if (errorsOrCities.isLeft) {
-        futureErrorResponse(errorsOrCities.left.get)
+      if (Try(force.toBoolean).getOrElse(false)) {
+        extractCities(countryId)
       } else {
-        val cities = errorsOrCities.right.get
+        val errorsOrCities = Data.get[List[City]](citiesCacheKey(countryId)) {
+          City.getAllFromDatabase(countryId)
+        }
 
-        if (cities.nonEmpty) {
-          futureJsonResponse(getResult(countryId, cities))
+        if (errorsOrCities.isLeft) {
+          futureErrorResponse(errorsOrCities.left.get)
         } else {
-          CityExtractor.extractCities(countryId) map {
-            case Left(extractErrors) =>
-              errorResponse(extractErrors)
+          val cities = errorsOrCities.right.get
 
-            case Right(extractedCities) =>
-              val saveErrors = Data.save[List[City]](key, extractedCities) {
-                City.saveAllToDatabase(extractedCities)
-              }
-
-              if (saveErrors.hasErrors) {
-                errorResponse(saveErrors)
-              } else {
-                jsonResponse(getResult(countryId, extractedCities))
-              }
+          if (cities.nonEmpty) {
+            futureJsonResponse(citiesResult(countryId, cities))
+          } else {
+            extractCities(countryId)
           }
         }
       }
@@ -173,7 +145,8 @@ object PrayerTimesController extends MuezzinAPIController {
   /**
    * Gets a list of available districts for given city
    *
-   * @param city Id of the city, a number
+   * @param city  Id of the city, a number
+   * @param force If this equals to "true" as String, cache and database will be bypassed
    *
    * @return When successful, a Json like following
    *
@@ -205,11 +178,7 @@ object PrayerTimesController extends MuezzinAPIController {
    * }
    * }}}
    */
-  def getDistricts(city: String) = Action.async {
-    def getResult(cityId: Int, districts: List[District]): JsValue = {
-      Json.obj("cityId" -> cityId, "districts" -> Json.toJson(districts.map(_.toJson)))
-    }
-
+  def getDistricts(city: String, force: String) = Action.async {
     val cityIdAsOpt = Try(city.toInt).toOption
 
     if (cityIdAsOpt.isEmpty) {
@@ -218,34 +187,22 @@ object PrayerTimesController extends MuezzinAPIController {
     } else {
       val cityId = cityIdAsOpt.get
 
-      val key = s"prayertimes.districts.$cityId"
-
-      val errorsOrDistricts = Data.get[List[District]](key) {
-        District.getAllFromDatabase(cityId)
-      }
-
-      if (errorsOrDistricts.isLeft) {
-        futureErrorResponse(errorsOrDistricts.left.get)
+      if (Try(force.toBoolean).getOrElse(false)) {
+        extractDistricts(cityId)
       } else {
-        val districts = errorsOrDistricts.right.get
+        val errorsOrDistricts = Data.get[List[District]](districtsCacheKey(cityId)) {
+          District.getAllFromDatabase(cityId)
+        }
 
-        if (districts.nonEmpty) {
-          futureJsonResponse(getResult(cityId, districts))
+        if (errorsOrDistricts.isLeft) {
+          futureErrorResponse(errorsOrDistricts.left.get)
         } else {
-          DistrictExtractor.extractDistricts(cityId) map {
-            case Left(extractErrors) =>
-              errorResponse(extractErrors)
+          val districts = errorsOrDistricts.right.get
 
-            case Right(extractedDistricts) =>
-              val saveErrors = Data.save[List[District]](key, extractedDistricts) {
-                District.saveAllToDatabase(extractedDistricts)
-              }
-
-              if (saveErrors.hasErrors) {
-                errorResponse(saveErrors)
-              } else {
-                jsonResponse(getResult(cityId, extractedDistricts))
-              }
+          if (districts.nonEmpty) {
+            futureJsonResponse(districtsResult(cityId, districts))
+          } else {
+            extractDistricts(cityId)
           }
         }
       }
@@ -258,6 +215,7 @@ object PrayerTimesController extends MuezzinAPIController {
    * @param country  Id of the country, a number
    * @param city     Id of the city, a number
    * @param district Id of the district, a number
+   * @param force    If this equals to "true" as String, cache and database will be bypassed
    *
    * @return When successful, a Json like following
    *
@@ -268,14 +226,14 @@ object PrayerTimesController extends MuezzinAPIController {
    *   "districtId": 9250,
    *   "times": [
    *     {
-   *       "dayDate": 1439683200,
-   *       "fajr": 1439696040,
-   *       "shuruq": 1439701980,
-   *       "dhuhr": 1439727720,
-   *       "asr": 1439741340,
-   *       "maghrib": 1439752740,
-   *       "isha": 1439758140,
-   *       "qibla": 1439728080
+   *       "dayDate": 1439683200000,
+   *       "fajr": 1439696040000,
+   *       "shuruq": 1439701980000,
+   *       "dhuhr": 1439727720000,
+   *       "asr": 1439741340000,
+   *       "maghrib": 1439752740000,
+   *       "isha": 1439758140000,
+   *       "qibla": 1439728080000
    *     },
    *     ...
    *   ]
@@ -297,16 +255,7 @@ object PrayerTimesController extends MuezzinAPIController {
    * }
    * }}}
    */
-  def getPrayerTimes(country: String, city: String, district: String) = Action.async {
-    def getResult(countryId: Int, cityId: Int, districtId: Option[Int], prayerTimesList: List[PrayerTimes]): JsValue = {
-      Json.obj(
-        "country"  -> countryId,
-        "city"     -> cityId,
-        "district" -> districtId,
-        "times"    -> Json.toJson(prayerTimesList.map(_.toJson))
-      )
-    }
-
+  def getPrayerTimes(country: String, city: String, district: String, force: String) = Action.async {
     val countryIdAsOpt = Try(country.toInt).toOption
 
     if (countryIdAsOpt.isEmpty) {
@@ -321,38 +270,25 @@ object PrayerTimesController extends MuezzinAPIController {
         Log.error(s"""Failed to get prayer times for country "$country", city "$city" and district "$district", city id is invalid!""", "PrayerTimes.getPrayerTimes")
         futureErrorResponse(Errors(SingleError.InvalidData.withValue(city).withDetails("City id is invalid.")))
       } else {
-        val cityId: Int = cityIdAsOpt.get
+        val cityId: Int             = cityIdAsOpt.get
+        val districtId: Option[Int] = Try(district.toInt).toOption
 
-        val districtId = Try(district.toInt).toOption
-
-        val key = s"prayertimes.$countryId.$cityId.$districtId"
-
-        val errorsOrPrayerTimesList = Data.get[List[PrayerTimes]](key) {
-          PrayerTimes.getAllFromDatabase(countryId, cityId, districtId)
-        }
-
-        if (errorsOrPrayerTimesList.isLeft) {
-          futureErrorResponse(errorsOrPrayerTimesList.left.get)
+        if (Try(force.toBoolean).getOrElse(false)) {
+          extractPrayerTimes(countryId, cityId, districtId)
         } else {
-          val prayerTimesList = errorsOrPrayerTimesList.right.get
+          val errorsOrPrayerTimesList = Data.get[List[PrayerTimes]](prayerTimesCacheKey(countryId, cityId, districtId)) {
+            PrayerTimes.getAllFromDatabase(countryId, cityId, districtId)
+          }
 
-          if (prayerTimesList.nonEmpty) {
-            futureJsonResponse(getResult(countryId, cityId, districtId, prayerTimesList))
+          if (errorsOrPrayerTimesList.isLeft) {
+            futureErrorResponse(errorsOrPrayerTimesList.left.get)
           } else {
-            PrayerTimesExtractor.extractPrayerTimes(countryId, cityId, districtId) map {
-              case Left(extractErrors) =>
-                errorResponse(extractErrors)
+            val prayerTimesList = errorsOrPrayerTimesList.right.get
 
-              case Right(extractedPrayerTimesList) =>
-                val saveErrors = Data.save[List[PrayerTimes]](key, extractedPrayerTimesList) {
-                  PrayerTimes.saveAllToDatabase(extractedPrayerTimesList)
-                }
-
-                if (saveErrors.hasErrors) {
-                  errorResponse(saveErrors)
-                } else {
-                  jsonResponse(getResult(countryId, cityId, districtId, extractedPrayerTimesList))
-                }
+            if (prayerTimesList.nonEmpty) {
+              futureJsonResponse(prayerTimesResult(countryId, cityId, districtId, prayerTimesList))
+            } else {
+              extractPrayerTimes(countryId, cityId, districtId)
             }
           }
         }
@@ -360,49 +296,104 @@ object PrayerTimesController extends MuezzinAPIController {
     }
   }
 
-  /**
-   * Gets a list of prayer times for given country and city when given city has no districts available
-   *
-   * @param country  Id of the country, a number
-   * @param city     Id of the city, a number
-   *
-   * @return When successful, a Json like following
-   *
-   * {{{
-   * {
-   *   "countryId": 166,
-   *   "cityId": 9956,
-   *   "districtId": null,
-   *   "times": [
-   *     {
-   *       "dayDate": 1439683200,
-   *       "fajr": 1439696040,
-   *       "shuruq": 1439701980,
-   *       "dhuhr": 1439727720,
-   *       "asr": 1439741340,
-   *       "maghrib": 1439752740,
-   *       "isha": 1439758140,
-   *       "qibla": 1439728080
-   *     },
-   *     ...
-   *   ]
-   * }
-   * }}}
-   *
-   * and when failed, a Json like following
-   *
-   * {{{
-   * {
-   *   "errors": [
-   *     {
-   *       "name": "...",
-   *       "value": "...",
-   *       "details": "..."
-   *     },
-   *     ...
-   *   ]
-   * }
-   * }}}
-   */
-  def getPrayerTimesWithoutDistrict(country: String, city: String) = getPrayerTimes(country, city, "")
+  private def countriesResult(countries: List[Country]): JsValue = {
+    Json.obj("countries" -> Json.toJson(countries.map(_.toJson)))
+  }
+
+  private def extractCountries(): Future[Result] = {
+    CountryExtractor.extractCountries() map {
+      case Left(extractErrors) =>
+        errorResponse(extractErrors)
+
+      case Right(extractedCountries) =>
+        val saveErrors = Data.save[List[Country]](countriesCacheKey, extractedCountries) {
+          Country.saveAllToDatabase(extractedCountries)
+        }
+
+        if (saveErrors.hasErrors) {
+          errorResponse(saveErrors)
+        } else {
+          jsonResponse(countriesResult(extractedCountries))
+        }
+    }
+  }
+
+  private def citiesResult(countryId: Int, cities: List[City]): JsValue = {
+    Json.obj("countryId" -> countryId, "cities" -> Json.toJson(cities.map(_.toJson)))
+  }
+
+  private def extractCities(countryId: Int): Future[Result] = {
+    CityExtractor.extractCities(countryId) map {
+      case Left(extractErrors) =>
+        errorResponse(extractErrors)
+
+      case Right(extractedCities) =>
+        val saveErrors = Data.save[List[City]](citiesCacheKey(countryId), extractedCities) {
+          City.saveAllToDatabase(extractedCities)
+        }
+
+        if (saveErrors.hasErrors) {
+          errorResponse(saveErrors)
+        } else {
+          jsonResponse(citiesResult(countryId, extractedCities))
+        }
+    }
+  }
+
+  private def districtsResult(cityId: Int, districts: List[District]): JsValue = {
+    Json.obj("cityId" -> cityId, "districts" -> Json.toJson(districts.map(_.toJson)))
+  }
+
+  private def extractDistricts(cityId: Int): Future[Result] = {
+    DistrictExtractor.extractDistricts(cityId) map {
+      case Left(extractErrors) =>
+        errorResponse(extractErrors)
+
+      case Right(extractedDistricts) =>
+        val saveErrors = Data.save[List[District]](districtsCacheKey(cityId), extractedDistricts) {
+          District.saveAllToDatabase(extractedDistricts)
+        }
+
+        if (saveErrors.hasErrors) {
+          errorResponse(saveErrors)
+        } else {
+          jsonResponse(districtsResult(cityId, extractedDistricts))
+        }
+    }
+  }
+
+  private def extractPrayerTimes(countryId: Int, cityId: Int, districtId: Option[Int]): Future[Result] = {
+    PrayerTimesExtractor.extractPrayerTimes(countryId, cityId, districtId) map {
+      case Left(extractErrors) =>
+        errorResponse(extractErrors)
+
+      case Right(extractedPrayerTimesList) =>
+        val saveErrors = Data.save[List[PrayerTimes]](prayerTimesCacheKey(countryId, cityId, districtId), extractedPrayerTimesList) {
+          PrayerTimes.saveAllToDatabase(extractedPrayerTimesList)
+        }
+
+        if (saveErrors.hasErrors) {
+          errorResponse(saveErrors)
+        } else {
+          jsonResponse(prayerTimesResult(countryId, cityId, districtId, extractedPrayerTimesList))
+        }
+    }
+  }
+
+  private def prayerTimesResult(countryId: Int, cityId: Int, districtId: Option[Int], prayerTimesList: List[PrayerTimes]): JsValue = {
+    Json.obj(
+      "country"  -> countryId,
+      "city"     -> cityId,
+      "district" -> districtId,
+      "times"    -> Json.toJson(prayerTimesList.map(_.toJson))
+    )
+  }
+
+  private def countriesCacheKey: String = "countries"
+
+  private def citiesCacheKey(countryId: Int): String = s"cities.$countryId"
+
+  private def districtsCacheKey(cityId: Int): String = s"districts.$cityId"
+
+  private def prayerTimesCacheKey(countryId: Int, cityId: Int, districtId: Option[Int]): String = s"prayertimes.$countryId.$cityId.${districtId.getOrElse("None")}"
 }
