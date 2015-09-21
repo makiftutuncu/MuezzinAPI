@@ -1,6 +1,8 @@
 package com.mehmetakiftutuncu.muezzinapi.extractors.prayertimes
 
-import com.mehmetakiftutuncu.muezzinapi.models.prayertimes.District
+import java.util.Locale
+
+import com.mehmetakiftutuncu.muezzinapi.models.prayertimes.{City, District}
 import com.mehmetakiftutuncu.muezzinapi.utilities.error.{Errors, SingleError}
 import com.mehmetakiftutuncu.muezzinapi.utilities.{Conf, Log, Utils, Web}
 import play.api.libs.json.{JsArray, JsValue}
@@ -57,7 +59,10 @@ object DistrictExtractor {
           val districts = districtsJs map {
             districtJs =>
               val id   = (districtJs \ "Value").as[String].toInt
-              val name = Utils.sanitizeHtml((districtJs \ "Text").as[String])
+              val name = Utils.sanitizeHtml(
+                str    = (districtJs \ "Text").as[String],
+                locale = {if (City.cityIdToTurkishNameMap.contains(cityId)) new Locale("tr") else Locale.getDefault}
+              )
 
               District(id, cityId, name)
           }

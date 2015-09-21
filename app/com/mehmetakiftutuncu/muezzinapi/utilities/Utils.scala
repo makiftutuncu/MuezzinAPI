@@ -1,5 +1,7 @@
 package com.mehmetakiftutuncu.muezzinapi.utilities
 
+import java.util.Locale
+
 /**
  * A utility object for utility stuff (utilitiception)
  */
@@ -10,24 +12,27 @@ object Utils {
    * @param str               String to sanitize
    * @param replaceHtmlChars  If true, HTML entity encoded characters will be replaced by their actual values
    * @param upperCaseEachWord If true, each word will start with uppercase letter
+   * @param locale            Case conversions will be done using this [[java.util.Locale]]
    *
    * @return Sanitized string
    */
-  def sanitizeHtml(str: String, replaceHtmlChars: Boolean = true, upperCaseEachWord: Boolean = true): String = {
-    val result = {
+  def sanitizeHtml(str: String,
+                   replaceHtmlChars: Boolean = true,
+                   upperCaseEachWord: Boolean = true,
+                   locale: Locale = Locale.getDefault): String = {
+    val uppercasedResult = {
       if (upperCaseEachWord) {
-        str.toLowerCase
+        str.toLowerCase(locale)
            .split(" ")
-           .map(w => w.take(1).toUpperCase + w.drop(1))
+           .map(w => w.take(1).toUpperCase(locale) + w.drop(1))
            .mkString(" ")
-           .trim
       } else {
-        str.trim
+        str
       }
     }
 
-    if (replaceHtmlChars) {
-      result.replaceAll("&#304;", "İ")
+    val replacedResult = if (replaceHtmlChars) {
+      uppercasedResult.replaceAll("&#304;", "İ")
             .replaceAll("&#214;", "Ö")
             .replaceAll("&#220;", "Ü")
             .replaceAll("&#199;", "Ç")
@@ -40,7 +45,9 @@ object Utils {
             .replaceAll("&#287;", "ğ")
             .replaceAll("&#351;", "ş")
     } else {
-      result
+      uppercasedResult
     }
+
+    replacedResult.replaceAll("[^\\pL\\s]", "").trim
   }
 }
