@@ -3,13 +3,13 @@
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
 
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>log/application.log</file>
+    <file>logs/application.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>log/application.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <fileNamePattern>logs/application.%d{yyyy-MM-dd}.log</fileNamePattern>
       <maxHistory>30</maxHistory>
     </rollingPolicy>
     <encoder>
-      <pattern>%coloredLevel - %message%n%xException</pattern>
+      <pattern>%level - %message%n%xException</pattern>
     </encoder>
   </appender>
 
