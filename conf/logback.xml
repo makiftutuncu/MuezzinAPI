@@ -2,6 +2,17 @@
     
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
 
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>log/application.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>log/application.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%coloredLevel - %message%n%xException</pattern>
+    </encoder>
+  </appender>
+
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
       <pattern>%coloredLevel - %message%n%xException</pattern>
@@ -12,11 +23,16 @@
     The logger name is typically the Java/Scala package name.
     This configures the log level to log at for a package and its children packages.
   -->
-  <logger name="play" level="WARN" />
-  <logger name="application" level="WARN" />
+  <logger name="play" level="WARN" additivity="false">
+    <appender-ref ref="FILE" />
+  </logger>
+
+  <logger name="application" level="WARN" additivity="false">
+    <appender-ref ref="FILE" />
+  </logger>
 
   <root level="ERROR">
-    <appender-ref ref="STDOUT" />
+    <appender-ref ref="FILE" />
   </root>
 
 </configuration>
