@@ -1,19 +1,16 @@
 name := """MuezzinAPI"""
 
-version := "1.2-SNAPSHOT"
+version := "2.0"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.8"
 
 libraryDependencies ++= Seq(
   jdbc,
-  ws,
   cache,
-  evolutions,
-  "com.typesafe.play" %% "anorm" % "2.4.0",
-  "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
-  "com.typesafe.akka" %% "akka-actor" % "2.3.12",
-  "joda-time" % "joda-time" % "2.8.2",
-  "mysql" % "mysql-connector-java" % "5.1.27"
+  ws,
+  "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test
 )
+
+resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"

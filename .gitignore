@@ -1,10 +1,37 @@
-logs
-target
-/.idea
-.idea
-/.idea_modules
-/.classpath
-/.project
-/.settings
-/RUNNING_PID
-conf/secret.conf
+# Created by .ignore support plugin (hsz.mobi)
+target/
+.idea/
+lib_managed/
+src_managed/
+project/boot/
+.cache
+*.iws
+/out/
+.idea_modules/
+atlassian-ide-plugin.xml
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+*.class
+*.log
+.lib/
+dist/*
+project/plugins/project/
+.scala_dependencies
+.worksheet
+*.DS_Store
+.AppleDouble
+.LSOverride
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk

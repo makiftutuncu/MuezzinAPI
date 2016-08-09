@@ -1,24 +1,3 @@
 # Routes
-# This file defines all application routes (Higher priority routes first)
 # ~~~~
-
-# Home page
-GET     /                                                               com.mehmetakiftutuncu.muezzinapi.controllers.Application.index
-
-# Prayer times
-GET     /countries                                                            com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getCountries(force = "false")
-GET     /countries/force                                                      com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getCountries(force = "true")
-GET     /$country<[0-9]+>/cities                                              com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getCities(country, force = "false")
-GET     /$country<[0-9]+>/cities/force                                        com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getCities(country, force = "true")
-GET     /$city<[0-9]+>/districts                                              com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getDistricts(city, force = "false")
-GET     /$city<[0-9]+>/districts/force                                        com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getDistricts(city, force = "true")
-GET     /prayertimes/$country<[0-9]+>/$city<[0-9]+>/$district<[0-9]+>         com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getPrayerTimes(country, city, district, force = "false")
-GET     /prayertimes/$country<[0-9]+>/$city<[0-9]+>/$district<[0-9]+>/force   com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getPrayerTimes(country, city, district, force = "true")
-GET     /prayertimes/$country<[0-9]+>/$city<[0-9]+>/None                      com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getPrayerTimes(country, city, district = "", force = "false")
-GET     /prayertimes/$country<[0-9]+>/$city<[0-9]+>/None/force                com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getPrayerTimes(country, city, district = "", force = "true")
-
-# Other stuff
-GET     /favicon.ico                                                    com.mehmetakiftutuncu.muezzinapi.controllers.Application.favicon
-
-# Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file                                                   controllers.Assets.versioned(path="/public", file: Asset)
+GET     /       com.mehmetakiftutuncu.muezzinapi.controllers.ApplicationController.index
