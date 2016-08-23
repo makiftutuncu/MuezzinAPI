@@ -22,13 +22,11 @@ API Reference
 ```json
 {
   "errors": [
-    ...,
     {
       "name": "requestFailed",
       "reason": "Diyanet returned content type.",
       "data": "321"
-    },
-    ...
+    }
   ]
 }
 ```
@@ -43,17 +41,15 @@ API Reference
 It returns available countries.
 
 #####Example Response
-```json
+```
 {
   "countries": {
-    ...,
     "2": {
       "name": "Turkey",
       "nameTurkish": "Türkiye",
       "nameNative": "Türkiye"
-    },
-    ...
-  ]
+    }
+  }
 }
 ```
 
@@ -72,11 +68,9 @@ It returns available cities of given `countryId`.
 ```json
 {
   "cities": {
-    ...,
     "540": {
       "name": "İzmir"
-    },
-    ...
+    }
   }
 }
 ```
@@ -94,11 +88,9 @@ It returns available districts of given `cityId` of `countryId`. Please note tha
 ```json
 {
   "districts": {
-    ...,
     "9552": {
       "name": "Aliağa"
-    },
-    ...
+    }
   }
 }
 ```
@@ -124,7 +116,6 @@ It returns prayer times for a month belonging to given `countryId`, `cityId` and
 ```json
 {
   "prayerTimes": {
-    ...,
     "2016-08-23": {
       "fajr": "04:56",
       "shuruq": "06:26",
@@ -133,8 +124,7 @@ It returns prayer times for a month belonging to given `countryId`, `cityId` and
       "maghrib": "20:03",
       "isha": "21:26",
       "qibla": "12:00"
-    },
-    ...
+    }
   }
 }
 ```
