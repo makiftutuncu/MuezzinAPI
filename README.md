@@ -5,7 +5,7 @@ Welcome to Muezzin API web service!
 
 This application provides Islamic prayer times for more than 200 countries, their cities and many of their districts. Data is read from Republic of Turkey, Presidency of Religious Affairs' [**website**](http://www.diyanet.gov.tr) and provided in a simple JSON structure.
 
-The application will be running at **https://muezzin.herokuapp.com**.
+The application will be running at **https://muezzin-staging.herokuapp.com**.
 
 Technical Details
 --------------
@@ -37,7 +37,7 @@ API Reference
 ***
 
 ###Countries
-####GET: [`/countries`](https://muezzin.herokuapp.com/countries)
+####GET: [`/countries`](https://muezzin-staging.herokuapp.com/countries)
 It returns available countries.
 
 #####Example Response
@@ -61,7 +61,7 @@ It returns available countries.
 ***
 
 ###Cities
-####GET: [`/countries/<countryId>/cities`](https://muezzin.herokuapp.com/countries/2/cities)
+####GET: [`/countries/<countryId>/cities`](https://muezzin-staging.herokuapp.com/countries/2/cities)
 It returns available cities of given `countryId`.
 
 #####Example Response
@@ -81,7 +81,7 @@ It returns available cities of given `countryId`.
 ***
 
 ###Districts
-####GET: [`/countries/<countryId>/cities/<cityId>/districts`](https://muezzin.herokuapp.com/countries/2/cities/540/districts)
+####GET: [`/countries/<countryId>/cities/<cityId>/districts`](https://muezzin-staging.herokuapp.com/countries/2/cities/540/districts)
 It returns available districts of given `cityId` of `countryId`. Please note that not every city has districts available. Diyanet only provides districts of cities of Turkey and some other major countries.
 
 #####Example Response
@@ -108,8 +108,8 @@ It returns available districts of given `cityId` of `countryId`. Please note tha
 ***
 
 ###Prayer Times
-####GET: [`/prayerTimes/country/<countryId>/city/<cityId>/district/<districtId>`](https://muezzin.herokuapp.com/prayerTimes/country/2/city/540/district/9560)
-####GET: [`/prayerTimes/country/<countryId>/city/<cityId>`](https://muezzin.herokuapp.com/prayerTimes/country/118/city/16382)
+####GET: [`/prayerTimes/country/<countryId>/city/<cityId>/district/<districtId>`](https://muezzin-staging.herokuapp.com/prayerTimes/country/2/city/540/district/9560)
+####GET: [`/prayerTimes/country/<countryId>/city/<cityId>`](https://muezzin-staging.herokuapp.com/prayerTimes/country/118/city/16382)
 It returns prayer times for a month belonging to given `countryId`, `cityId` and `districtId`. If you do not have district for your country and city, use second endpoint without district id (See above). Please note that there are no times available for past dates and more than 1 month future dates. Diyanet only provides 1 month of prayer times starting from current time. Therefore, it is client's responsibility to keep requested prayer times and request more whenever needed.
 
 #####Example Response
