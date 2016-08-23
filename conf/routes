@@ -1,3 +1,12 @@
 # Routes
 # ~~~~
-GET     /       com.mehmetakiftutuncu.muezzinapi.controllers.ApplicationController.index
+GET     /               com.mehmetakiftutuncu.muezzinapi.controllers.ApplicationController.index
+GET     /favicon.ico    com.mehmetakiftutuncu.muezzinapi.controllers.ApplicationController.empty
+GET     /robots.txt     com.mehmetakiftutuncu.muezzinapi.controllers.ApplicationController.empty
+
+GET     /countries                                      com.mehmetakiftutuncu.muezzinapi.controllers.PlaceController.getCountries
+GET     /countries/:countryId/cities                    com.mehmetakiftutuncu.muezzinapi.controllers.PlaceController.getCities(countryId: Int)
+GET     /countries/:countryId/cities/:cityId/districts  com.mehmetakiftutuncu.muezzinapi.controllers.PlaceController.getDistricts(countryId: Int, cityId: Int)
+
+GET     /prayerTimes/country/:countryId/city/:cityId                        com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getPrayerTimes(countryId: Int, cityId: Int, districtId: Option[Int] = None)
+GET     /prayerTimes/country/:countryId/city/:cityId/district/:districtId   com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getPrayerTimes(countryId: Int, cityId: Int, districtId: Option[Int])
