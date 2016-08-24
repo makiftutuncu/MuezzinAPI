@@ -1,5 +1,6 @@
 package com.mehmetakiftutuncu.muezzinapi.services
 
+import java.time.Duration
 import javax.inject.{Inject, Singleton}
 
 import com.github.mehmetakiftutuncu.errors.{Maybe, _}
@@ -10,7 +11,7 @@ import com.mehmetakiftutuncu.muezzinapi.data.FirebaseRealtimeDatabase._
 import com.mehmetakiftutuncu.muezzinapi.data.{AbstractCache, AbstractFirebaseRealtimeDatabase}
 import com.mehmetakiftutuncu.muezzinapi.models.{Place, PrayerTimesOfDay}
 import com.mehmetakiftutuncu.muezzinapi.services.fetchers.AbstractPrayerTimesFetcherService
-import com.mehmetakiftutuncu.muezzinapi.utilities.{Log, Logging}
+import com.mehmetakiftutuncu.muezzinapi.utilities.{Log, Logging, Timer}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
@@ -82,6 +83,8 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
   private def getPrayerTimesFromFirebase(place: Place): Future[Maybe[List[PrayerTimesOfDay]]] = {
     val log: String = s"Failed to get prayer times for ${place.toLog} from Firebase Realtime Database!"
 
+    Timer.start(s"getPrayerTimesFromFirebase.${place.toPath}")
+
     val prayerTimesReference: DatabaseReference = FirebaseRealtimeDatabase.root / "prayerTimes" / place.toPath
 
     val promise: Promise[Maybe[List[PrayerTimesOfDay]]] = Promise[Maybe[List[PrayerTimesOfDay]]]()
@@ -134,6 +137,11 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
     futureResult.map {
       result: Maybe[List[PrayerTimesOfDay]] =>
         prayerTimesReference.removeEventListener(valueEventListener)
+
+        val duration: Duration = Timer.stop(s"getPrayerTimesFromFirebase.${place.toPath}")
+
+        Log.debug(s"""Got prayer times from Firebase for "${place.toLog}" in ${duration.toMillis} ms.""")
+
         result
     }.recoverWith {
       case _ =>
@@ -143,6 +151,8 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
   }
 
   private def setPrayerTimesToFirebase(place: Place, prayerTimes: List[PrayerTimesOfDay]): Future[Errors] = {
+    Timer.start(s"setPrayerTimesToFirebase.${place.toPath}")
+
     val prayerTimesReference: DatabaseReference = FirebaseRealtimeDatabase.root / "prayerTimes" / place.toPath
 
     val setErrorFutures: List[Future[Errors]] = prayerTimes.map {
@@ -169,6 +179,15 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
 
     val futureSetErrors: Future[List[Errors]] = Future.sequence(setErrorFutures)
 
-    futureSetErrors.map(_.foldLeft(Errors.empty)(_ ++ _))
+    futureSetErrors.map {
+      setErrors: List[Errors] =>
+        val errors: Errors = setErrors.foldLeft(Errors.empty)(_ ++ _)
+
+        val duration: Duration = Timer.stop(s"setPrayerTimesToFirebase.${place.toPath}")
+
+        Log.debug(s"""Set prayer times to Firebase for "${place.toLog}" in ${duration.toMillis} ms.""")
+
+        errors
+    }
   }
 }

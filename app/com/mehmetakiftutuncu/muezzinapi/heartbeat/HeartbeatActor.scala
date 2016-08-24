@@ -1,5 +1,7 @@
 package com.mehmetakiftutuncu.muezzinapi.heartbeat
 
+import java.time.Duration
+
 import akka.actor.Actor
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
 import com.mehmetakiftutuncu.muezzinapi.heartbeat.HeartbeatActor.Beep
@@ -13,9 +15,13 @@ class HeartbeatActor(Conf: AbstractConf, WS: AbstractWS) extends Actor with Logg
 
   override def receive: Receive = {
     case Beep =>
+      Timer.start("heartbeat")
+
       WS.url(host).get().map {
         wsResponse: WSResponse =>
-          Log.debug("I am still alive!")
+          val duration: Duration = Timer.stop("heartbeat")
+
+          Log.debug(s"I am still alive! Took ${duration.toMillis} ms.")
       }
 
     case m @ _ =>

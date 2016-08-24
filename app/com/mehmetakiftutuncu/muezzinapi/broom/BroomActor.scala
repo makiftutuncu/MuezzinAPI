@@ -1,6 +1,6 @@
 package com.mehmetakiftutuncu.muezzinapi.broom
 
-import java.time.{LocalDate, LocalDateTime}
+import java.time.{Duration, LocalDate, LocalDateTime}
 import java.util.concurrent.TimeUnit
 
 import akka.actor.Actor
@@ -11,7 +11,7 @@ import com.mehmetakiftutuncu.muezzinapi.broom.BroomActor.Wipe
 import com.mehmetakiftutuncu.muezzinapi.data.AbstractFirebaseRealtimeDatabase
 import com.mehmetakiftutuncu.muezzinapi.data.FirebaseRealtimeDatabase._
 import com.mehmetakiftutuncu.muezzinapi.models.PrayerTimesOfDay
-import com.mehmetakiftutuncu.muezzinapi.utilities.{AbstractConf, Log, Logging}
+import com.mehmetakiftutuncu.muezzinapi.utilities.{AbstractConf, Log, Logging, Timer}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
@@ -20,14 +20,13 @@ import scala.util.{Failure, Success}
 
 class BroomActor(Conf: AbstractConf,
                  FirebaseRealtimeDatabase: AbstractFirebaseRealtimeDatabase) extends Actor with Logging {
-  private val log: String = "Broom failed!"
   private val effect: FiniteDuration = Conf.getFiniteDuration("muezzinApi.broom.effect", FiniteDuration(1, TimeUnit.DAYS))
 
   override def receive: Receive = {
     case Wipe =>
       val startDate: LocalDate = LocalDateTime.now.minusSeconds(effect.toSeconds).toLocalDate
 
-      Log.debug(s"Wiping prayer times that are older than or equal to $startDate...")
+      Timer.start("broom")
 
       val countryReference: DatabaseReference = FirebaseRealtimeDatabase.root / "prayerTimes" / "country"
 
@@ -38,7 +37,7 @@ class BroomActor(Conf: AbstractConf,
           val exception: DatabaseException = databaseError.toException
           val errors: Errors = Errors(CommonError.requestFailed.reason(exception.getMessage))
 
-          Log.error(log, errors, exception)
+          Log.error("Broom failed!", errors, exception)
 
           referencesPromise.failure(exception)
         }
@@ -118,14 +117,16 @@ class BroomActor(Conf: AbstractConf,
 
       futureResult.onComplete {
         case Success((errors: Errors, numberOfDeletedPrayerTimes: Int)) =>
-          Log.warn(s"Broom finished! $numberOfDeletedPrayerTimes prayer times are wiped${if (errors.hasErrors) " with errors " + errors else ""}!")
+          val duration: Duration = Timer.stop("broom")
+
+          Log.warn(s"Broom finished in ${duration.toMillis} ms! $numberOfDeletedPrayerTimes prayer times that are older than or equal to $startDate are wiped${if (errors.hasErrors) " with errors " + errors else ""}!")
 
         case Failure(t: Throwable) =>
-          Log.error(log, t)
+          Log.error("Broom failed!", t)
       }
 
     case m @ _ =>
-      Log.error(log, Errors(CommonError.invalidData.reason("Received unknown message!").data(m.toString)))
+      Log.error("Broom failed!", Errors(CommonError.invalidData.reason("Received unknown message!").data(m.toString)))
   }
 }
 

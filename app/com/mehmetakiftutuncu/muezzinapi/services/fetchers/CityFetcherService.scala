@@ -1,5 +1,6 @@
 package com.mehmetakiftutuncu.muezzinapi.services.fetchers
 
+import java.time.Duration
 import javax.inject.{Inject, Singleton}
 
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors, Maybe}
@@ -25,12 +26,14 @@ class CityFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) extends A
     val log: String = s"""Failed to get cities for country id "$countryId"!"""
 
     try {
-      Log.debug(s"""Fetching cities for country id "$countryId"...""")
+      Timer.start(s"fetchCities.$countryId")
 
       val url: String = Conf.getString("muezzinApi.url.cities", "").format(countryId)
 
       WS.url(url).get().map {
         wsResponse: WSResponse =>
+          val fetchDuration: Duration = Timer.stop(s"fetchCities.$countryId")
+
           val status: Int         = wsResponse.status
           val contentType: String = wsResponse.header(HeaderNames.CONTENT_TYPE).getOrElse("")
 
@@ -47,7 +50,13 @@ class CityFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) extends A
           } else {
             val json: JsValue = wsResponse.json
 
-            parseCities(countryId, json)
+            val (parseDuration: Duration, maybeCities: Maybe[List[City]]) = Timer.time {
+              parseCities(countryId, json)
+            }
+
+            Log.debug(s"""Fetched cities for country id "$countryId" in ${fetchDuration.toMillis} ms and parsed them in ${parseDuration.toMillis} ms.""")
+
+            maybeCities
           }
       }.recover {
         case NonFatal(t: Throwable) =>
@@ -69,8 +78,6 @@ class CityFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) extends A
     val log: String = s"""Failed to parse cities for country id "$countryId"!"""
 
     try {
-      Log.debug(s"""Parsing cities for country id "$countryId"...""")
-
       val cityJsonsAsOpt: Option[JsArray] = json.asOpt[JsArray]
 
       if (cityJsonsAsOpt.isEmpty) {

@@ -1,5 +1,6 @@
 package com.mehmetakiftutuncu.muezzinapi.services.fetchers
 
+import java.time.Duration
 import java.util.Locale
 import javax.inject.{Inject, Singleton}
 
@@ -26,12 +27,14 @@ class DistrictFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) exten
     val log: String = s"""Failed to get districts for city id "$cityId"!"""
 
     try {
-      Log.debug(s"""Fetching districts for city id "$cityId"...""")
+      Timer.start(s"fetchDistricts.$cityId")
 
       val url: String = Conf.getString("muezzinApi.url.districts", "").format(cityId)
 
       WS.url(url).get().map {
         wsResponse: WSResponse =>
+          val fetchDuration: Duration = Timer.stop(s"fetchDistricts.$cityId")
+
           val status: Int         = wsResponse.status
           val contentType: String = wsResponse.header(HeaderNames.CONTENT_TYPE).getOrElse("")
 
@@ -48,7 +51,13 @@ class DistrictFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) exten
           } else {
             val json: JsValue = wsResponse.json
 
-            parseDistricts(cityId, json)
+            val (parseDuration: Duration, maybeDistricts: Maybe[List[District]]) = Timer.time {
+              parseDistricts(cityId, json)
+            }
+
+            Log.debug(s"""Fetched districts for city id "$cityId" in ${fetchDuration.toMillis} ms and parsed them in ${parseDuration.toMillis} ms.""")
+
+            maybeDistricts
           }
       }.recover {
         case NonFatal(t: Throwable) =>
@@ -70,8 +79,6 @@ class DistrictFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) exten
     val log: String = s"""Failed to parse districts for city id "$cityId"!"""
 
     try {
-      Log.debug(s"""Parsing districts for city id "$cityId"...""")
-
       val districtJsonsAsOpt: Option[JsArray] = json.asOpt[JsArray]
 
       if (districtJsonsAsOpt.isEmpty) {

@@ -1,5 +1,6 @@
 package com.mehmetakiftutuncu.muezzinapi.services
 
+import java.time.Duration
 import javax.inject.{Inject, Singleton}
 
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors, Maybe}
@@ -10,7 +11,7 @@ import com.mehmetakiftutuncu.muezzinapi.data.FirebaseRealtimeDatabase._
 import com.mehmetakiftutuncu.muezzinapi.data.{AbstractCache, AbstractFirebaseRealtimeDatabase}
 import com.mehmetakiftutuncu.muezzinapi.models.District
 import com.mehmetakiftutuncu.muezzinapi.services.fetchers.AbstractDistrictFetcherService
-import com.mehmetakiftutuncu.muezzinapi.utilities.{Log, Logging}
+import com.mehmetakiftutuncu.muezzinapi.utilities.{Log, Logging, Timer}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
@@ -81,6 +82,8 @@ class DistrictService @Inject()(Cache: AbstractCache,
   private def getDistrictsFromFirebase(countryId: Int, cityId: Int): Future[Maybe[List[District]]] = {
     val log: String = s"""Failed to get districts of country "$countryId" and city "$cityId" from Firebase Realtime Database!"""
 
+    Timer.start(s"getDistrictsFromFirebase.$cityId")
+
     val districtsReference: DatabaseReference = FirebaseRealtimeDatabase.root / "countries" / countryId / "cities" / cityId / "districts"
 
     val promise: Promise[Maybe[List[District]]] = Promise[Maybe[List[District]]]()
@@ -127,6 +130,11 @@ class DistrictService @Inject()(Cache: AbstractCache,
     futureResult.map {
       result: Maybe[List[District]] =>
         districtsReference.removeEventListener(valueEventListener)
+
+        val duration: Duration = Timer.stop(s"getDistrictsFromFirebase.$cityId")
+
+        Log.debug(s"""Got districts from Firebase for city "$cityId" in ${duration.toMillis} ms.""")
+
         result
     }.recoverWith {
       case _ =>
@@ -136,6 +144,8 @@ class DistrictService @Inject()(Cache: AbstractCache,
   }
 
   private def setDistrictsToFirebase(countryId: Int, cityId: Int, districts: List[District]): Future[Errors] = {
+    Timer.start(s"setDistrictsToFirebase.$cityId")
+
     val districtsReference: DatabaseReference = FirebaseRealtimeDatabase.root / "countries" / countryId / "cities" / cityId / "districts"
 
     val setErrorFutures: List[Future[Errors]] = districts.map {
@@ -161,6 +171,15 @@ class DistrictService @Inject()(Cache: AbstractCache,
 
     val futureSetErrors: Future[List[Errors]] = Future.sequence(setErrorFutures)
 
-    futureSetErrors.map(_.foldLeft(Errors.empty)(_ ++ _))
+    futureSetErrors.map {
+      setErrors: List[Errors] =>
+        val errors: Errors = setErrors.foldLeft(Errors.empty)(_ ++ _)
+
+        val duration: Duration = Timer.stop(s"setDistrictsToFirebase.$cityId")
+
+        Log.debug(s"""Set districts to Firebase for country "$countryId" and city "$cityId" in ${duration.toMillis} ms.""")
+
+        errors
+    }
   }
 }

@@ -1,6 +1,6 @@
 package com.mehmetakiftutuncu.muezzinapi.services.fetchers
 
-import java.time.LocalDate
+import java.time.{Duration, LocalDate}
 import javax.inject.{Inject, Singleton}
 
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors, Maybe}
@@ -30,12 +30,14 @@ class PrayerTimesFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) ex
     val log: String = s"Failed to get prayer times for ${place.toLog}!"
 
     try {
-      Log.debug(s"Fetching prayer times for ${place.toLog}...")
+      Timer.start(s"fetchPrayerTimes.${place.toPath}")
 
       val url: String = Conf.getString("muezzinApi.url.prayerTimes", "")
 
       WS.url(url).post(place.toForm).map {
         wsResponse: WSResponse =>
+          val fetchDuration: Duration = Timer.stop(s"fetchPrayerTimes.${place.toPath}")
+
           val status: Int         = wsResponse.status
           val contentType: String = wsResponse.header(HeaderNames.CONTENT_TYPE).getOrElse("")
 
@@ -52,7 +54,13 @@ class PrayerTimesFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) ex
           } else {
             val page: String = wsResponse.body
 
-            parsePrayerTimes(place, page)
+            val (parseDuration: Duration, maybePrayerTimes: Maybe[List[PrayerTimesOfDay]]) = Timer.time {
+              parsePrayerTimes(place, page)
+            }
+
+            Log.debug(s"Fetched prayer times for ${place.toLog} in ${fetchDuration.toMillis} ms and parsed them in ${parseDuration.toMillis} ms.")
+
+            maybePrayerTimes
           }
       }.recover {
         case NonFatal(t: Throwable) =>
@@ -74,8 +82,6 @@ class PrayerTimesFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) ex
     val log: String = s"Failed to parse prayer times for ${place.toLog}!"
 
     try {
-      Log.debug(s"Parsing prayer times for ${place.toLog}...")
-
       val prayerTimesTableMatchAsOpt: Option[Match] = prayerTimesTableRegex.findFirstMatchIn(page)
 
       if (prayerTimesTableMatchAsOpt.isEmpty) {

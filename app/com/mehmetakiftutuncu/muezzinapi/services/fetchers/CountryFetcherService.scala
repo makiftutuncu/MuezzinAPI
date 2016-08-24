@@ -1,5 +1,6 @@
 package com.mehmetakiftutuncu.muezzinapi.services.fetchers
 
+import java.time.Duration
 import javax.inject.{Inject, Singleton}
 
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors, Maybe}
@@ -25,12 +26,14 @@ class CountryFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) extend
     val log: String = "Failed to get countries!"
 
     try {
-      Log.debug("Fetching countries...")
+      Timer.start("fetchCountries")
 
       val url: String = Conf.getString("muezzinApi.url.countries", "")
 
       WS.url(url).get().map {
         wsResponse: WSResponse =>
+          val fetchDuration: Duration = Timer.stop("fetchCountries")
+
           val status: Int         = wsResponse.status
           val contentType: String = wsResponse.header(HeaderNames.CONTENT_TYPE).getOrElse("")
 
@@ -47,7 +50,13 @@ class CountryFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) extend
           } else {
             val page: String = wsResponse.body
 
-            parseCountries(page)
+            val (parseDuration: Duration, maybeCountries: Maybe[List[Country]]) = Timer.time {
+              parseCountries(page)
+            }
+
+            Log.debug(s"""Fetched countries in ${fetchDuration.toMillis} ms and parsed them in ${parseDuration.toMillis} ms.""")
+
+            maybeCountries
           }
       }.recover {
         case NonFatal(t: Throwable) =>
@@ -69,8 +78,6 @@ class CountryFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) extend
     val log: String = "Failed to parse all countries!"
 
     try {
-      Log.debug("Parsing countries...")
-
       val countriesSelectRegex: Regex = """[\s\S]+<select.+?id="Country".+?>([\s\S]+?)<\/select>[\s\S]+""".r
       val countryOptionRegex: Regex   = """[\s\S]*?<option.+?value="(\d+)".*?>(.+?)<\/option>[\s\S]*?""".r
 

@@ -1,5 +1,6 @@
 package com.mehmetakiftutuncu.muezzinapi.services
 
+import java.time.Duration
 import javax.inject.{Inject, Singleton}
 
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors, Maybe}
@@ -10,7 +11,7 @@ import com.mehmetakiftutuncu.muezzinapi.data.FirebaseRealtimeDatabase._
 import com.mehmetakiftutuncu.muezzinapi.data.{AbstractCache, AbstractFirebaseRealtimeDatabase}
 import com.mehmetakiftutuncu.muezzinapi.models.City
 import com.mehmetakiftutuncu.muezzinapi.services.fetchers.AbstractCityFetcherService
-import com.mehmetakiftutuncu.muezzinapi.utilities.{Log, Logging}
+import com.mehmetakiftutuncu.muezzinapi.utilities.{Log, Logging, Timer}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
@@ -80,6 +81,8 @@ class CityService @Inject()(Cache: AbstractCache,
   private def getCitiesFromFirebase(countryId: Int): Future[Maybe[List[City]]] = {
     val log: String = s"""Failed to get cities of country "$countryId" from Firebase Realtime Database!"""
 
+    Timer.start(s"getCitiesFromFirebase.$countryId")
+
     val citiesReference: DatabaseReference = FirebaseRealtimeDatabase.root / "countries" / countryId / "cities"
 
     val promise: Promise[Maybe[List[City]]] = Promise[Maybe[List[City]]]()
@@ -126,6 +129,11 @@ class CityService @Inject()(Cache: AbstractCache,
     futureResult.map {
       result: Maybe[List[City]] =>
         citiesReference.removeEventListener(valueEventListener)
+
+        val duration: Duration = Timer.stop(s"getCitiesFromFirebase.$countryId")
+
+        Log.debug(s"""Got cities from Firebase for country "$countryId" in ${duration.toMillis} ms.""")
+
         result
     }.recoverWith {
       case _ =>
@@ -135,6 +143,8 @@ class CityService @Inject()(Cache: AbstractCache,
   }
 
   private def setCitiesToFirebase(countryId: Int, cities: List[City]): Future[Errors] = {
+    Timer.start(s"setCitiesToFirebase.$countryId")
+
     val citiesReference: DatabaseReference = FirebaseRealtimeDatabase.root / "countries" / countryId / "cities"
 
     val setErrorFutures: List[Future[Errors]] = cities.map {
@@ -160,6 +170,15 @@ class CityService @Inject()(Cache: AbstractCache,
 
     val futureSetErrors: Future[List[Errors]] = Future.sequence(setErrorFutures)
 
-    futureSetErrors.map(_.foldLeft(Errors.empty)(_ ++ _))
+    futureSetErrors.map {
+      setErrors: List[Errors] =>
+        val errors: Errors = setErrors.foldLeft(Errors.empty)(_ ++ _)
+
+        val duration: Duration = Timer.stop(s"setCitiesToFirebase.$countryId")
+
+        Log.debug(s"""Set cities to Firebase for country "$countryId" in ${duration.toMillis} ms.""")
+
+        errors
+    }
   }
 }
