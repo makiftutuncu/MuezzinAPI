@@ -5,8 +5,8 @@ import java.time.Duration
 import akka.actor.Actor
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors, Maybe}
 import com.google.firebase.database._
-import com.mehmetakiftutuncu.muezzinapi.data.{AbstractCache, AbstractFirebaseRealtimeDatabase}
 import com.mehmetakiftutuncu.muezzinapi.data.FirebaseRealtimeDatabase._
+import com.mehmetakiftutuncu.muezzinapi.data.{AbstractCache, AbstractFirebaseRealtimeDatabase}
 import com.mehmetakiftutuncu.muezzinapi.models.{Place, PrayerTimesOfDay}
 import com.mehmetakiftutuncu.muezzinapi.services.AbstractPrayerTimesService
 import com.mehmetakiftutuncu.muezzinapi.services.fetchers.AbstractPrayerTimesFetcherService
@@ -15,7 +15,7 @@ import com.mehmetakiftutuncu.muezzinapi.utilities.{AbstractConf, Log, Logging, T
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
-import scala.util.{Failure, Success}
+import scala.util.control.NonFatal
 
 class ShovelActor(Cache: AbstractCache,
                   Conf: AbstractConf,
@@ -26,94 +26,112 @@ class ShovelActor(Cache: AbstractCache,
     case Dig =>
       Timer.start("shovel")
 
-      val countryReference: DatabaseReference = FirebaseRealtimeDatabase.root / "prayerTimes" / "country"
+      collectPlacesToDig().foreach {
+        maybePlacesToDig: Maybe[List[Place]] =>
+          if (maybePlacesToDig.hasErrors) {
+            val duration: Duration = Timer.stop("shovel")
 
-      val placesPromise: Promise[List[Place]] = Promise[List[Place]]()
+            Log.warn(s"Shovel failed in ${duration.toMillis} ms with errors ${maybePlacesToDig.errors}!")
+          } else {
+            val placesToDig: List[Place] = maybePlacesToDig.value
 
-      val valueEventListener: ValueEventListener = new ValueEventListener {
-        override def onCancelled(databaseError: DatabaseError): Unit = {
-          val exception: DatabaseException = databaseError.toException
-          val errors: Errors = Errors(CommonError.requestFailed.reason(exception.getMessage))
+            digPlaces(placesToDig).foreach {
+              digErrors: Errors =>
+                val duration: Duration = Timer.stop("shovel")
 
-          Log.error("Shovel failed!", errors, exception)
-
-          placesPromise.failure(exception)
-        }
-
-        override def onDataChange(dataSnapshot: DataSnapshot): Unit = {
-          import scala.collection.JavaConverters._
-
-          val countrySnapshots: List[DataSnapshot] = dataSnapshot.getChildren.iterator().asScala.toList
-
-          val places: List[Place] = countrySnapshots.flatMap {
-            countrySnapshot: DataSnapshot =>
-              val citySnapshots: List[DataSnapshot] = (countrySnapshot / "city").getChildren.iterator().asScala.toList
-
-              citySnapshots.flatMap {
-                citySnapshot: DataSnapshot =>
-                  val districtSnapshots: List[DataSnapshot] = (citySnapshot / "district").getChildren.iterator().asScala.toList
-
-                  val placesForCity: List[Place] = if (districtSnapshots.isEmpty) {
-                    List(Place(countrySnapshot.getKey.toInt, citySnapshot.getKey.toInt, None))
-                  } else {
-                    districtSnapshots.map {
-                      districtSnapshot: DataSnapshot =>
-                        Place(countrySnapshot.getKey.toInt, citySnapshot.getKey.toInt, Option(districtSnapshot.getKey.toInt))
-                    }
-                  }
-
-                  placesForCity
-              }
+                if (digErrors.hasErrors) {
+                  Log.warn(s"Shovel failed in ${duration.toMillis} ms with errors $digErrors!")
+                } else {
+                  Log.warn(s"Shovel finished in ${duration.toMillis} ms! Prayer times are fetched for ${placesToDig.size} places!")
+                }
+            }
           }
-
-          placesPromise.success(places)
-        }
-      }
-
-      countryReference.addValueEventListener(valueEventListener)
-
-      val futureResult: Future[(Errors, Int)] = placesPromise.future.flatMap {
-        places: List[Place] =>
-          countryReference.removeEventListener(valueEventListener)
-
-          val fetchResultFutures: List[Future[Errors]] = places.map {
-            place: Place =>
-              PrayerTimesFetcherService.getPrayerTimes(place).flatMap {
-                maybePrayerTimes: Maybe[List[PrayerTimesOfDay]] =>
-                  if (maybePrayerTimes.hasErrors) {
-                    Future.successful(maybePrayerTimes.errors)
-                  } else {
-                    val prayerTimes: List[PrayerTimesOfDay] = maybePrayerTimes.value
-
-                    PrayerTimesService.setPrayerTimesToFirebase(place, prayerTimes).map {
-                      setErrors: Errors =>
-                        Cache.remove(s"/prayerTimes/${place.toPath}")
-                        setErrors
-                    }
-                  }
-              }
-          }
-
-          Future.sequence(fetchResultFutures).map {
-            fetchResults: List[Errors] =>
-              val fetchResult: Errors = fetchResults.foldLeft(Errors.empty)(_ ++ _)
-
-              fetchResult -> places.size
-          }
-      }
-
-      futureResult.onComplete {
-        case Success((errors: Errors, numberOfPlaces: Int)) =>
-          val duration: Duration = Timer.stop("shovel")
-
-          Log.warn(s"Shovel finished in ${duration.toMillis} ms! Prayer times are fetched for $numberOfPlaces places${if (errors.hasErrors) " with errors " + errors else ""}!")
-
-        case Failure(t: Throwable) =>
-          Log.error("Shovel failed!", t)
       }
 
     case m @ _ =>
       Log.error("Shovel failed!", Errors(CommonError.invalidData.reason("Received unknown message!").data(m.toString)))
+  }
+
+  private[shovel] def collectPlacesToDig(): Future[Maybe[List[Place]]] = {
+    val countryReference: DatabaseReference = FirebaseRealtimeDatabase.root / "prayerTimes" / "country"
+
+    val placesPromise: Promise[List[Place]] = Promise[List[Place]]()
+
+    val valueEventListener: ValueEventListener = new ValueEventListener {
+      override def onCancelled(databaseError: DatabaseError): Unit = {
+        placesPromise.failure(databaseError.toException)
+      }
+
+      override def onDataChange(dataSnapshot: DataSnapshot): Unit = {
+        import scala.collection.JavaConverters._
+
+        val countrySnapshots: List[DataSnapshot] = dataSnapshot.getChildren.iterator().asScala.toList
+
+        val places: List[Place] = countrySnapshots.flatMap {
+          countrySnapshot: DataSnapshot =>
+            val citySnapshots: List[DataSnapshot] = (countrySnapshot / "city").getChildren.iterator().asScala.toList
+
+            citySnapshots.flatMap {
+              citySnapshot: DataSnapshot =>
+                val districtSnapshots: List[DataSnapshot] = (citySnapshot / "district").getChildren.iterator().asScala.toList
+
+                val placesForCity: List[Place] = if (districtSnapshots.isEmpty) {
+                  List(Place(countrySnapshot.getKey.toInt, citySnapshot.getKey.toInt, None))
+                } else {
+                  districtSnapshots.map {
+                    districtSnapshot: DataSnapshot =>
+                      Place(countrySnapshot.getKey.toInt, citySnapshot.getKey.toInt, Option(districtSnapshot.getKey.toInt))
+                  }
+                }
+
+                placesForCity
+            }
+        }
+
+        placesPromise.success(places)
+      }
+    }
+
+    placesPromise.future.map {
+      places: List[Place] =>
+        countryReference.removeEventListener(valueEventListener)
+
+        Maybe(places)
+    }.recover {
+      case NonFatal(t: Throwable) =>
+        val errors: Errors = Errors(CommonError.database.reason(t.getMessage))
+        Log.error("Shovel failed to collect places to dig from Firebase Realtime Database!", errors, t)
+
+        Maybe(errors)
+    }
+  }
+
+  private[shovel] def digPlaces(placesToDig: List[Place]): Future[Errors] = {
+    val digFutureResults: List[Future[Errors]] = placesToDig.map {
+      place: Place =>
+        PrayerTimesFetcherService.getPrayerTimes(place).flatMap {
+          maybePrayerTimes: Maybe[List[PrayerTimesOfDay]] =>
+            if (maybePrayerTimes.hasErrors) {
+              Future.successful(maybePrayerTimes.errors)
+            } else {
+              val prayerTimes: List[PrayerTimesOfDay] = maybePrayerTimes.value
+
+              PrayerTimesService.setPrayerTimesToFirebase(place, prayerTimes).map {
+                setErrors: Errors =>
+                  Cache.remove(s"/prayerTimes/${place.toPath}")
+                  setErrors
+              }
+            }
+        }
+    }
+
+    Future.sequence(digFutureResults).map(_.foldLeft(Errors.empty)(_ ++ _)).recover {
+      case NonFatal(t: Throwable) =>
+        val errors: Errors = Errors(CommonError.database.reason(t.getMessage))
+        Log.error("Shovel failed to dig places collected from Firebase Realtime Database!", errors, t)
+
+        errors
+    }
   }
 }
 
