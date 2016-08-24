@@ -20,6 +20,7 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[PrayerTimesService])
 trait AbstractPrayerTimesService {
   def getPrayerTimes(place: Place): Future[Maybe[List[PrayerTimesOfDay]]]
+  def setPrayerTimesToFirebase(place: Place, prayerTimes: List[PrayerTimesOfDay]): Future[Errors]
 }
 
 @Singleton
@@ -77,6 +78,47 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
           Log.error(log, errors, t)
           Maybe(errors)
       }
+    }
+  }
+
+  override def setPrayerTimesToFirebase(place: Place, prayerTimes: List[PrayerTimesOfDay]): Future[Errors] = {
+    Timer.start(s"setPrayerTimesToFirebase.${place.toPath}")
+
+    val prayerTimesReference: DatabaseReference = FirebaseRealtimeDatabase.root / "prayerTimes" / place.toPath
+
+    val setErrorFutures: List[Future[Errors]] = prayerTimes.map {
+      prayerTimesOfDay: PrayerTimesOfDay =>
+        val key: String = prayerTimesOfDay.date.format(PrayerTimesOfDay.dateFormatter)
+        val prayerTimesOfDayReference: DatabaseReference = prayerTimesReference / key
+
+        val promise: Promise[Errors] = Promise[Errors]()
+
+        prayerTimesOfDayReference.updateChildren(prayerTimesOfDay.toJavaMap, new CompletionListener {
+          override def onComplete(databaseError: DatabaseError, databaseReference: DatabaseReference): Unit = {
+            val errors: Errors = if (databaseError != null) {
+              Errors(CommonError.database.reason(databaseError.toException.getMessage).data(key))
+            } else {
+              Errors.empty
+            }
+
+            promise.success(errors)
+          }
+        })
+
+        promise.future
+    }
+
+    val futureSetErrors: Future[List[Errors]] = Future.sequence(setErrorFutures)
+
+    futureSetErrors.map {
+      setErrors: List[Errors] =>
+        val errors: Errors = setErrors.foldLeft(Errors.empty)(_ ++ _)
+
+        val duration: Duration = Timer.stop(s"setPrayerTimesToFirebase.${place.toPath}")
+
+        Log.debug(s"""Set prayer times to Firebase for "${place.toLog}" in ${duration.toMillis} ms.""")
+
+        errors
     }
   }
 
@@ -147,47 +189,6 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
       case _ =>
         prayerTimesReference.removeEventListener(valueEventListener)
         futureResult
-    }
-  }
-
-  private def setPrayerTimesToFirebase(place: Place, prayerTimes: List[PrayerTimesOfDay]): Future[Errors] = {
-    Timer.start(s"setPrayerTimesToFirebase.${place.toPath}")
-
-    val prayerTimesReference: DatabaseReference = FirebaseRealtimeDatabase.root / "prayerTimes" / place.toPath
-
-    val setErrorFutures: List[Future[Errors]] = prayerTimes.map {
-      prayerTimesOfDay: PrayerTimesOfDay =>
-        val key: String = prayerTimesOfDay.date.format(PrayerTimesOfDay.dateFormatter)
-        val prayerTimesOfDayReference: DatabaseReference = prayerTimesReference / key
-
-        val promise: Promise[Errors] = Promise[Errors]()
-
-        prayerTimesOfDayReference.updateChildren(prayerTimesOfDay.toJavaMap, new CompletionListener {
-          override def onComplete(databaseError: DatabaseError, databaseReference: DatabaseReference): Unit = {
-            val errors: Errors = if (databaseError != null) {
-              Errors(CommonError.database.reason(databaseError.toException.getMessage).data(key))
-            } else {
-              Errors.empty
-            }
-
-            promise.success(errors)
-          }
-        })
-
-        promise.future
-    }
-
-    val futureSetErrors: Future[List[Errors]] = Future.sequence(setErrorFutures)
-
-    futureSetErrors.map {
-      setErrors: List[Errors] =>
-        val errors: Errors = setErrors.foldLeft(Errors.empty)(_ ++ _)
-
-        val duration: Duration = Timer.stop(s"setPrayerTimesToFirebase.${place.toPath}")
-
-        Log.debug(s"""Set prayer times to Firebase for "${place.toLog}" in ${duration.toMillis} ms.""")
-
-        errors
     }
   }
 }

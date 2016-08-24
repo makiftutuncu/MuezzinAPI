@@ -23,7 +23,7 @@ class Broom @Inject()(ActorSystem: ActorSystem,
                       Conf: AbstractConf,
                       FirebaseRealtimeDatabase: AbstractFirebaseRealtimeDatabase) extends AbstractBroom with Logging {
   private val enabled: Boolean             = Conf.getBoolean("muezzinApi.broom.enabled", defaultValue = true)
-  private val initialDelay: FiniteDuration = Conf.getFiniteDuration("muezzinApi.broom.initialDelay", FiniteDuration(10, TimeUnit.SECONDS))
+  private val initialDelay: FiniteDuration = Conf.getFiniteDuration("muezzinApi.broom.initialDelay", FiniteDuration(2, TimeUnit.MINUTES))
   private val interval: FiniteDuration     = Conf.getFiniteDuration("muezzinApi.broom.interval", FiniteDuration(1, TimeUnit.DAYS))
 
   private val actor: ActorRef = ActorSystem.actorOf(
@@ -33,7 +33,7 @@ class Broom @Inject()(ActorSystem: ActorSystem,
 
   private val cancellable: Option[Cancellable] = {
     if (enabled) {
-      val firstRun: LocalDateTime = LocalDateTime.now.plusSeconds(interval.toSeconds).withNano(0)
+      val firstRun: LocalDateTime = LocalDateTime.now.plusSeconds(initialDelay.toSeconds).withNano(0)
 
       Log.warn(s"Starting Broom scheduled to $firstRun...")
 

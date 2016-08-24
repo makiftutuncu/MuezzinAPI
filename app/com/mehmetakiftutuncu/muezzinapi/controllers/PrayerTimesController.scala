@@ -55,7 +55,7 @@ class PrayerTimesController @Inject()(CountryService: AbstractCountryService,
                     } else if (districtId.isEmpty && districts.nonEmpty) {
                       futureFailWithErrors(log, Errors(CommonError.invalidRequest.reason(s"""District id is not provided but city "$cityId" has districts available!""")))
                     } else {
-                      val place: Place = Place(country, city, districtAsOpt)
+                      val place: Place = Place(countryId, cityId, districtId)
 
                       PrayerTimesService.getPrayerTimes(place).map {
                         case Left(prayerTimesErrors: Errors) =>

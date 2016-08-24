@@ -16,6 +16,7 @@ trait AbstractCache {
 
   def get[T: ClassTag](key: String): Option[T]
   def set[T: ClassTag](key: String, value: T, timeout: FiniteDuration = timeout): Unit
+  def remove(key: String): Unit
 }
 
 @Singleton
@@ -32,5 +33,11 @@ class Cache @Inject()(CacheApi: CacheApi, Conf: AbstractConf) extends AbstractCa
     Log.debug(s"""Setting "$key" to cache...""")
 
     CacheApi.set(key, value, timeout)
+  }
+
+  override def remove(key: String): Unit = {
+    Log.debug(s"""Removing "$key" from cache...""")
+
+    CacheApi.remove(key)
   }
 }
