@@ -3,13 +3,15 @@ package com.mehmetakiftutuncu.muezzinapi.utilities
 import com.github.mehmetakiftutuncu.errors.Errors
 import play.api.http.ContentTypes
 import play.api.libs.json.JsValue
-import play.api.mvc.{Controller, Result}
+import play.api.mvc.{Codec, Controller, Result}
 
 import scala.concurrent.Future
 
 trait ControllerBase extends Controller with Logging {
+  private val utf8JsonContentType: String = ContentTypes.withCharset(ContentTypes.JSON)(Codec.utf_8)
+
   protected def success(result: JsValue): Result = {
-    Ok(result).as(ContentTypes.JSON)
+    Ok(result).as(utf8JsonContentType)
   }
 
   protected def futureSuccess(result: JsValue): Future[Result] = {
@@ -17,7 +19,7 @@ trait ControllerBase extends Controller with Logging {
   }
 
   protected def failWithErrors(errors: Errors): Result = {
-    ServiceUnavailable(errors.represent(JsonErrorRepresenter, includeWhen = true)).as(ContentTypes.JSON)
+    ServiceUnavailable(errors.represent(JsonErrorRepresenter, includeWhen = true)).as(utf8JsonContentType)
   }
 
   protected def failWithErrors(message: => String, errors: Errors): Result = {

@@ -13,12 +13,12 @@ Muezzin API application is developed using [**Play Framework**](https://www.play
 
 API Reference
 -------------
-###General
+### General
 * All endpoints use `GET` method.
 * When a request is successful, response will be `200 OK` with `application/json` as `Content-Type` and the requested data in body.
 * When a request fails, response will be `503 SERVICE_UNAVAILABLE` with `application/json` as `Content-Type` and error data in body according to [**Errors**](https://github.com/mehmetakiftutuncu/Errors). 
 
-#####Example Response With Errors
+##### Example Response With Errors
 ```json
 {
   "errors": [
@@ -36,11 +36,11 @@ API Reference
 
 ***
 
-###Countries
-####GET: [`/countries`](https://muezzin-staging.herokuapp.com/countries)
+### Countries
+#### GET: [`/countries`](https://muezzin-staging.herokuapp.com/countries)
 It returns available countries.
 
-#####Example Response
+##### Example Response
 ```
 {
   "countries": {
@@ -60,11 +60,11 @@ It returns available countries.
 
 ***
 
-###Cities
-####GET: [`/countries/<countryId>/cities`](https://muezzin-staging.herokuapp.com/countries/2/cities)
+### Cities
+#### GET: [`/countries/<countryId>/cities`](https://muezzin-staging.herokuapp.com/countries/2/cities)
 It returns available cities of given `countryId`.
 
-#####Example Response
+##### Example Response
 ```json
 {
   "cities": {
@@ -80,11 +80,11 @@ It returns available cities of given `countryId`.
 
 ***
 
-###Districts
-####GET: [`/countries/<countryId>/cities/<cityId>/districts`](https://muezzin-staging.herokuapp.com/countries/2/cities/540/districts)
+### Districts
+#### GET: [`/countries/<countryId>/cities/<cityId>/districts`](https://muezzin-staging.herokuapp.com/countries/2/cities/540/districts)
 It returns available districts of given `cityId` of `countryId`. Please note that not every city has districts available. Diyanet only provides districts of cities of Turkey and some other major countries.
 
-#####Example Response
+##### Example Response
 ```json
 {
   "districts": {
@@ -95,7 +95,7 @@ It returns available districts of given `cityId` of `countryId`. Please note tha
 }
 ```
 
-#####Example Response for a City With No Districts Available
+##### Example Response for a City With No Districts Available
 ```json
 {
   "districts": {}
@@ -107,12 +107,12 @@ It returns available districts of given `cityId` of `countryId`. Please note tha
 
 ***
 
-###Prayer Times
-####GET: [`/prayerTimes/country/<countryId>/city/<cityId>/district/<districtId>`](https://muezzin-staging.herokuapp.com/prayerTimes/country/2/city/540/district/9560)
-####GET: [`/prayerTimes/country/<countryId>/city/<cityId>`](https://muezzin-staging.herokuapp.com/prayerTimes/country/118/city/16382)
+### Prayer Times
+#### GET: [`/prayerTimes/country/<countryId>/city/<cityId>/district/<districtId>`](https://muezzin-staging.herokuapp.com/prayerTimes/country/2/city/540/district/9560)
+#### GET: [`/prayerTimes/country/<countryId>/city/<cityId>`](https://muezzin-staging.herokuapp.com/prayerTimes/country/118/city/16382)
 It returns prayer times for a month belonging to given `countryId`, `cityId` and `districtId`. If you do not have district for your country and city, use second endpoint without district id (See above). Please note that there are no times available for past dates and more than 1 month future dates. Diyanet only provides 1 month of prayer times starting from current time. Therefore, it is client's responsibility to keep requested prayer times and request more whenever needed.
 
-#####Example Response
+##### Example Response
 ```json
 {
   "prayerTimes": {
