@@ -49,7 +49,7 @@ class DistrictService @Inject()(Cache: AbstractCache,
 
               Future.successful(Maybe(districtsFromFirebase))
             } else {
-              DistrictFetcherService.getDistricts(cityId).flatMap {
+              DistrictFetcherService.getDistricts(countryId, cityId).flatMap {
                 maybeDistricts: Maybe[List[District]] =>
                   if (maybeDistricts.hasErrors) {
                     Future.successful(Maybe(maybeDistricts.errors))

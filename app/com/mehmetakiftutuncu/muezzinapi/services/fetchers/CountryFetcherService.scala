@@ -13,7 +13,6 @@ import play.api.libs.ws.WSResponse
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.control.NonFatal
-import scala.util.matching.Regex
 
 @ImplementedBy(classOf[CountryFetcherService])
 trait AbstractCountryFetcherService {
@@ -28,7 +27,7 @@ class CountryFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) extend
     try {
       Timer.start("fetchCountries")
 
-      val url: String = Conf.getString("muezzinApi.url.countries", "")
+      val url: String = Conf.getString("muezzinApi.diyanet.url", "")
 
       WS.url(url).get().map {
         wsResponse: WSResponse =>
@@ -38,12 +37,12 @@ class CountryFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) extend
           val contentType: String = wsResponse.header(HeaderNames.CONTENT_TYPE).getOrElse("")
 
           if (status != Status.OK) {
-            val errors: Errors = Errors(CommonError.requestFailed.reason("Diyanet returned invalid status."))
+            val errors: Errors = Errors(CommonError.requestFailed.reason("Diyanet returned invalid status.").data(status.toString))
             Log.error(s"$log Status '$status', content type '$contentType', body: ${wsResponse.body}", errors)
 
             Maybe(errors)
           } else if (!contentType.contains(MimeTypes.HTML)) {
-            val errors: Errors = Errors(CommonError.requestFailed.reason("Diyanet returned content type."))
+            val errors: Errors = Errors(CommonError.requestFailed.reason("Diyanet returned invalid content type.").data(contentType))
             Log.error(s"$log Status '$status', content type '$contentType', body: ${wsResponse.body}", errors)
 
             Maybe(errors)
@@ -78,45 +77,25 @@ class CountryFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) extend
     val log: String = "Failed to parse all countries!"
 
     try {
-      val countriesSelectRegex: Regex = """[\s\S]+<select.+?id="Country".+?>([\s\S]+?)<\/select>[\s\S]+""".r
-      val countryOptionRegex: Regex   = """[\s\S]*?<option.+?value="(\d+)".*?>(.+?)<\/option>[\s\S]*?""".r
+      val countries: List[Country] = parseListOf[Country](page, "ulkeId") { case (id: Int, rawName: String) =>
+        Country.idToNamesMap.get(id) match {
+          case Some((name: String, nameTurkish: String, nameNative: String)) =>
+            Country(id, name, nameTurkish, nameNative)
 
-      val countriesSelectMatchAsOpt: Option[Regex.Match] = countriesSelectRegex.findFirstMatchIn(page)
+          case None =>
+            Country(id, rawName, rawName, rawName)
+        }
+      }
 
-      if (countriesSelectMatchAsOpt.isEmpty || countriesSelectMatchAsOpt.exists(_.groupCount < 1)) {
-        val errors: Errors = Errors(CommonError("parseFailed").reason("Countries are not found."))
-        Log.error(s"$log Page: $page", errors)
+      if (countries.isEmpty) {
+        val errors: Errors = Errors(CommonError.notFound)
+        Log.error(s"$log No countries were found. Page: $page", errors)
 
         Maybe(errors)
       } else {
-        val countriesSelect: String                 = countriesSelectMatchAsOpt.get.group(1)
-        val countryOptionMatches: List[Regex.Match] = countryOptionRegex.findAllMatchIn(countriesSelect).toList
+        val sortedCountries: List[Country] = countries.sortBy(_.name)
 
-        if (countryOptionMatches.isEmpty || countryOptionMatches.exists(_.groupCount < 2)) {
-          val errors: Errors = Errors(CommonError("parseFailed").reason("Found some invalid countries."))
-          Log.error(s"$log Page: $page", errors)
-
-          Maybe(errors)
-        } else {
-          val countries: List[Country] = countryOptionMatches.map {
-            countryOptionMatch: Regex.Match =>
-              val id: Int = countryOptionMatch.group(1).toInt
-
-              val rawName: String = HtmlSanitizer.sanitizeHtml(countryOptionMatch.group(2))
-
-              Country.idToNamesMap.get(id) match {
-                case Some((name: String, nameTurkish: String, nameNative: String)) =>
-                  Country(id, name, nameTurkish, nameNative)
-
-                case None =>
-                  Country(id, rawName, rawName, rawName)
-              }
-          }
-
-          val sortedCountries: List[Country] = countries.sortBy(_.name)
-
-          Maybe(sortedCountries)
-        }
+        Maybe(sortedCountries)
       }
     } catch {
       case NonFatal(t: Throwable) =>

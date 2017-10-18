@@ -32,7 +32,7 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
   override def getPrayerTimes(place: Place): Future[Maybe[List[PrayerTimesOfDay]]] = {
     val log: String = s"Failed to get prayer times for ${place.toLog}!"
 
-    val cacheKey: String = (FirebaseRealtimeDatabase.root / "prayerTimes" / place.toPath).cacheKey
+    val cacheKey: String = (prayerTimesReference / place.toPath).cacheKey
 
     val prayerTimesFromCacheAsOpt: Option[List[PrayerTimesOfDay]] = Cache.get[List[PrayerTimesOfDay]](cacheKey)
 
@@ -82,14 +82,14 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
   }
 
   override def setPrayerTimesToFirebase(place: Place, prayerTimes: List[PrayerTimesOfDay]): Future[Errors] = {
-    Timer.start(s"setPrayerTimesToFirebase.${place.toPath}")
+    Timer.start(s"setPrayerTimesToFirebase.${place.toKey}")
 
-    val prayerTimesReference: DatabaseReference = FirebaseRealtimeDatabase.root / "prayerTimes" / place.toPath
+    val prayerTimesReferenceForPlace: DatabaseReference = prayerTimesReference / place.toPath
 
     val setErrorFutures: List[Future[Errors]] = prayerTimes.map {
       prayerTimesOfDay: PrayerTimesOfDay =>
         val key: String = prayerTimesOfDay.date.format(PrayerTimesOfDay.dateFormatter)
-        val prayerTimesOfDayReference: DatabaseReference = prayerTimesReference / key
+        val prayerTimesOfDayReference: DatabaseReference = prayerTimesReferenceForPlace / key
 
         val promise: Promise[Errors] = Promise[Errors]()
 
@@ -114,7 +114,7 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
       setErrors: List[Errors] =>
         val errors: Errors = setErrors.foldLeft(Errors.empty)(_ ++ _)
 
-        val duration: Duration = Timer.stop(s"setPrayerTimesToFirebase.${place.toPath}")
+        val duration: Duration = Timer.stop(s"setPrayerTimesToFirebase.${place.toKey}")
 
         Log.debug(s"""Set prayer times to Firebase for "${place.toLog}" in ${duration.toMillis} ms.""")
 
@@ -125,9 +125,9 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
   private def getPrayerTimesFromFirebase(place: Place): Future[Maybe[List[PrayerTimesOfDay]]] = {
     val log: String = s"Failed to get prayer times for ${place.toLog} from Firebase Realtime Database!"
 
-    Timer.start(s"getPrayerTimesFromFirebase.${place.toPath}")
+    Timer.start(s"getPrayerTimesFromFirebase.${place.toKey}")
 
-    val prayerTimesReference: DatabaseReference = FirebaseRealtimeDatabase.root / "prayerTimes" / place.toPath
+    val prayerTimesReferenceForPlace: DatabaseReference = prayerTimesReference / place.toPath
 
     val promise: Promise[Maybe[List[PrayerTimesOfDay]]] = Promise[Maybe[List[PrayerTimesOfDay]]]()
 
@@ -156,7 +156,8 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
                 val asr: String     = (currentDataSnapshot / "asr").getValue(classOf[String])
                 val maghrib: String = (currentDataSnapshot / "maghrib").getValue(classOf[String])
                 val isha: String    = (currentDataSnapshot / "isha").getValue(classOf[String])
-                val qibla: String   = (currentDataSnapshot / "qibla").getValue(classOf[String])
+
+                val qibla: Option[String] = Option((currentDataSnapshot / "qibla").getValue(classOf[String]))
 
                 PrayerTimesOfDay(date, fajr, shuruq, dhuhr, asr, maghrib, isha, qibla)
             }
@@ -172,22 +173,22 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
       }
     }
 
-    prayerTimesReference.addValueEventListener(valueEventListener)
+    prayerTimesReferenceForPlace.addValueEventListener(valueEventListener)
 
     val futureResult: Future[Maybe[List[PrayerTimesOfDay]]] = promise.future
 
     futureResult.map {
       result: Maybe[List[PrayerTimesOfDay]] =>
-        prayerTimesReference.removeEventListener(valueEventListener)
+        prayerTimesReferenceForPlace.removeEventListener(valueEventListener)
 
-        val duration: Duration = Timer.stop(s"getPrayerTimesFromFirebase.${place.toPath}")
+        val duration: Duration = Timer.stop(s"getPrayerTimesFromFirebase.${place.toKey}")
 
         Log.debug(s"""Got prayer times from Firebase for "${place.toLog}" in ${duration.toMillis} ms.""")
 
         result
     }.recoverWith {
       case _ =>
-        prayerTimesReference.removeEventListener(valueEventListener)
+        prayerTimesReferenceForPlace.removeEventListener(valueEventListener)
         futureResult
     }
   }

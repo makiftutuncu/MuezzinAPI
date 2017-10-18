@@ -29,8 +29,6 @@ class PrayerTimesController @Inject()(CountryService: AbstractCountryService,
         if (countryAsOpt.isEmpty) {
           futureFailWithErrors(log, Errors(CommonError.notFound.data(countryId.toString)))
         } else {
-          val country: Country = countryAsOpt.get
-
           CityService.getCities(countryId).flatMap {
             case Left(cityErrors: Errors) =>
               futureFailWithErrors(log, cityErrors)
@@ -41,8 +39,6 @@ class PrayerTimesController @Inject()(CountryService: AbstractCountryService,
               if (cityAsOpt.isEmpty) {
                 futureFailWithErrors(log, Errors(CommonError.notFound.data(cityId.toString)))
               } else {
-                val city: City = cityAsOpt.get
-
                 DistrictService.getDistricts(countryId, cityId).flatMap {
                   case Left(districtErrors: Errors) =>
                     futureFailWithErrors(log, districtErrors)
@@ -55,7 +51,7 @@ class PrayerTimesController @Inject()(CountryService: AbstractCountryService,
                     } else if (districtId.isEmpty && districts.nonEmpty) {
                       futureFailWithErrors(log, Errors(CommonError.invalidRequest.reason(s"""District id is not provided but city "$cityId" has districts available!""")))
                     } else {
-                      val place: Place = Place(countryId, cityId, districtId)
+                      val place: Place = Place(countryId, Some(cityId), districtId)
 
                       PrayerTimesService.getPrayerTimes(place).map {
                         case Left(prayerTimesErrors: Errors) =>

@@ -13,7 +13,7 @@ case class PrayerTimesOfDay(date: LocalDate,
                             asr: PrayerTime,
                             maghrib: PrayerTime,
                             isha: PrayerTime,
-                            qibla: PrayerTime) {
+                            qibla: Option[PrayerTime]) {
   def toJson: JsObject = Json.obj(
     date.format(PrayerTimesOfDay.dateFormatter) -> {
       fajr.toJson    ++
@@ -22,7 +22,7 @@ case class PrayerTimesOfDay(date: LocalDate,
       asr.toJson     ++
       maghrib.toJson ++
       isha.toJson    ++
-      qibla.toJson
+      qibla.map(_.toJson).getOrElse(Json.obj())
     }
   )
 
@@ -35,7 +35,8 @@ case class PrayerTimesOfDay(date: LocalDate,
     map.put("asr",     asr.time.format(PrayerTime.timeFormatter))
     map.put("maghrib", maghrib.time.format(PrayerTime.timeFormatter))
     map.put("isha",    isha.time.format(PrayerTime.timeFormatter))
-    map.put("qibla",   qibla.time.format(PrayerTime.timeFormatter))
+
+    qibla.foreach(q => map.put("qibla", q.time.format(PrayerTime.timeFormatter)))
 
     map
   }
@@ -52,7 +53,7 @@ object PrayerTimesOfDay {
             asr: String,
             maghrib: String,
             isha: String,
-            qibla: String): PrayerTimesOfDay = {
+            qibla: Option[String]): PrayerTimesOfDay = {
     PrayerTimesOfDay(
       LocalDate.parse(date, dateFormatter),
       fajr,
@@ -72,7 +73,7 @@ object PrayerTimesOfDay {
             asr: String,
             maghrib: String,
             isha: String,
-            qibla: String): PrayerTimesOfDay = {
+            qibla: Option[String]): PrayerTimesOfDay = {
     PrayerTimesOfDay(
       date,
       PrayerTime(fajr,    PrayerTimeTypes.Fajr),
@@ -81,7 +82,7 @@ object PrayerTimesOfDay {
       PrayerTime(asr,     PrayerTimeTypes.Asr),
       PrayerTime(maghrib, PrayerTimeTypes.Maghrib),
       PrayerTime(isha,    PrayerTimeTypes.Isha),
-      PrayerTime(qibla,   PrayerTimeTypes.Qibla)
+      qibla.map(PrayerTime(_, PrayerTimeTypes.Qibla))
     )
   }
 }

@@ -24,8 +24,8 @@ API Reference
   "errors": [
     {
       "name": "requestFailed",
-      "reason": "Diyanet returned content type.",
-      "data": "321"
+      "reason": "Diyanet returned invalid content type.",
+      "data": "applocation/xml"
     }
   ]
 }
@@ -131,6 +131,7 @@ It returns prayer times for a month belonging to given `countryId`, `cityId` and
 
 * Every key in ``prayerTimes`` object is the date for the prayer times in the value object. Dates are formatted as: `yyyy-MM-dd`
 * `fajr`, `shuruq`, `dhuhr`, `asr`, `maghrib`, `isha` and `qibla` are times formatted as `HH:mm`, representing the named times respectively.
+* `qibla` key might not always exist.
 
 ***
 
@@ -141,7 +142,7 @@ Muezzin API is licensed under the terms of the MIT License.
 ```
 MIT License
 
-Copyright (c) 2016 Mehmet Akif Tütüncü
+Copyright (c) 2017 Mehmet Akif Tütüncü
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

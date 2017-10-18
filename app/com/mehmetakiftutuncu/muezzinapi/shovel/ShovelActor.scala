@@ -76,11 +76,11 @@ class ShovelActor(Cache: AbstractCache,
                 val districtSnapshots: List[DataSnapshot] = (citySnapshot / "district").getChildren.iterator().asScala.toList
 
                 val placesForCity: List[Place] = if (districtSnapshots.isEmpty) {
-                  List(Place(countrySnapshot.getKey.toInt, citySnapshot.getKey.toInt, None))
+                  List(Place(countrySnapshot.getKey.toInt, Some(citySnapshot.getKey.toInt), None))
                 } else {
                   districtSnapshots.map {
                     districtSnapshot: DataSnapshot =>
-                      Place(countrySnapshot.getKey.toInt, citySnapshot.getKey.toInt, Option(districtSnapshot.getKey.toInt))
+                      Place(countrySnapshot.getKey.toInt, Some(citySnapshot.getKey.toInt), Some(districtSnapshot.getKey.toInt))
                   }
                 }
 

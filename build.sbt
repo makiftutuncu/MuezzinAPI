@@ -1,6 +1,6 @@
 name := """MuezzinAPI"""
 
-version := "2.1"
+version := "2.2"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
@@ -12,6 +12,7 @@ libraryDependencies ++= Seq(
   "com.google.firebase"           % "firebase-admin" % "5.0.0",
   "com.github.mehmetakiftutuncu" %% "errors"         % "1.1",
   "com.typesafe.akka"            %% "akka-actor"     % "2.4.17",
+  "org.jsoup"                     % "jsoup"          % "1.10.3",
   "org.specs2"                   %% "specs2-core"    % "3.9.0" % Test
 )
 
