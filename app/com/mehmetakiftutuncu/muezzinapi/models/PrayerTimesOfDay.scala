@@ -22,7 +22,7 @@ case class PrayerTimesOfDay(date: LocalDate,
       asr.toJson     ++
       maghrib.toJson ++
       isha.toJson    ++
-      qibla.map(_.toJson).getOrElse(Json.obj())
+      qibla.map(_.toJson).getOrElse(PrayerTime("00:00", PrayerTimeTypes.Qibla).toJson)
     }
   )
 

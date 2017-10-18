@@ -123,7 +123,7 @@ It returns prayer times for a month belonging to given `countryId`, `cityId` and
 
 * Every key in ``prayerTimes`` object is the date for the prayer times in the value object. Dates are formatted as: `yyyy-MM-dd`
 * `fajr`, `shuruq`, `dhuhr`, `asr`, `maghrib`, `isha` and `qibla` are times formatted as `HH:mm`, representing the named times respectively.
-* `qibla` key might not always exist.
+* `qibla` is set to `00:00` when it is not available.
 
 ***
 
