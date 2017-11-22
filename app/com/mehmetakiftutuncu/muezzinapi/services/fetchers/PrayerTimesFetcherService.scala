@@ -30,9 +30,9 @@ class PrayerTimesFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) ex
     try {
       Timer.start(s"fetchPrayerTimes.${place.toKey}")
 
-      val url: String = Conf.getString("muezzinApi.diyanet.url", "")
+      val url: String = Conf.getString("muezzinApi.diyanet.prayerTimesUrl", "").format(place.districtId.map(_.toString).getOrElse(""))
 
-      WS.url(url).post(place.toForm).map {
+      WS.url(url).get().map {
         wsResponse: WSResponse =>
           val fetchDuration: Duration = Timer.stop(s"fetchPrayerTimes.${place.toKey}")
 
@@ -81,7 +81,7 @@ class PrayerTimesFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) ex
 
     try {
       val document: Document = Jsoup.parse(page)
-      val listOfTrArrays: List[Array[Element]] = document.select("#itemList").select("tr").asScala.toList.map(_.select("td").asScala.toArray)
+      val listOfTrArrays: List[Array[Element]] = document.select(".vakit-table").select("tr").asScala.toList.map(_.select("td").asScala.toArray)
 
       val prayerTimes: List[PrayerTimesOfDay] = listOfTrArrays.filter(_.nonEmpty).map { trArrayForDay: Array[Element] =>
         val date: String    = trArrayForDay(0).text()

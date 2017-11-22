@@ -27,7 +27,7 @@ class CountryFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) extend
     try {
       Timer.start("fetchCountries")
 
-      val url: String = Conf.getString("muezzinApi.diyanet.url", "")
+      val url: String = Conf.getString("muezzinApi.diyanet.countriesUrl", "")
 
       WS.url(url).get().map {
         wsResponse: WSResponse =>
@@ -77,7 +77,7 @@ class CountryFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) extend
     val log: String = "Failed to parse all countries!"
 
     try {
-      val countries: List[Country] = parseListOf[Country](page, "ulkeId") { case (id: Int, rawName: String) =>
+      val countries: List[Country] = parseListOf[Country](page, "country-select") { case (id: Int, rawName: String) =>
         Country.idToNamesMap.get(id) match {
           case Some((name: String, nameTurkish: String, nameNative: String)) =>
             Country(id, name, nameTurkish, nameNative)

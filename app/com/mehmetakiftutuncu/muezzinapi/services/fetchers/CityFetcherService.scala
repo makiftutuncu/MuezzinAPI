@@ -5,9 +5,10 @@ import javax.inject.{Inject, Singleton}
 
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors, Maybe}
 import com.google.inject.ImplementedBy
-import com.mehmetakiftutuncu.muezzinapi.models.{City, Place}
+import com.mehmetakiftutuncu.muezzinapi.models.City
 import com.mehmetakiftutuncu.muezzinapi.utilities._
 import play.api.http.{HeaderNames, MimeTypes, Status}
+import play.api.libs.json.{JsArray, JsValue}
 import play.api.libs.ws.WSResponse
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -27,9 +28,9 @@ class CityFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) extends A
     try {
       Timer.start(s"fetchCities.$countryId")
 
-      val url: String = Conf.getString("muezzinApi.diyanet.url", "")
+      val url: String = Conf.getString("muezzinApi.diyanet.citiesUrl", "")
 
-      WS.url(url).post(Place(countryId, None, None).toForm).map {
+      WS.url(url).withQueryString("ChangeType" -> "country", "CountryId" -> countryId.toString).get().map {
         wsResponse: WSResponse =>
           val fetchDuration: Duration = Timer.stop(s"fetchCities.$countryId")
 
@@ -41,13 +42,13 @@ class CityFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) extends A
             Log.error(s"$log Status '$status', content type '$contentType', body: ${wsResponse.body}", errors)
 
             Maybe(errors)
-          } else if (!contentType.contains(MimeTypes.HTML)) {
+          } else if (!contentType.contains(MimeTypes.JSON)) {
             val errors: Errors = Errors(CommonError.requestFailed.reason("Diyanet returned invalid content type.").data(contentType))
             Log.error(s"$log Status '$status', content type '$contentType', body: ${wsResponse.body}", errors)
 
             Maybe(errors)
           } else {
-            val page: String = wsResponse.body
+            val page: JsValue = wsResponse.json
 
             val (parseDuration: Duration, maybeCities: Maybe[List[City]]) = Timer.time {
               parseCities(countryId, page)
@@ -73,12 +74,14 @@ class CityFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) extends A
     }
   }
 
-  private def parseCities(countryId: Int, page: String): Maybe[List[City]] = {
+  private def parseCities(countryId: Int, page: JsValue): Maybe[List[City]] = {
     val log: String = s"""Failed to parse cities for country "$countryId"!"""
 
     try {
-      val cities: List[City] = parseListOf[City](page, "ilId") { case (id: Int, rawName: String) =>
-        val name: String = City.idToNamesMap.getOrElse(id, HtmlSanitizer.sanitizeHtml(rawName))
+      val cities: List[City] = (page \ "StateList").as[JsArray].value.toList.map { cityJson: JsValue =>
+        val id: Int         = (cityJson \ "SehirID").as[String].toInt
+        val rawName: String = (cityJson \ "SehirAdi").as[String]
+        val name: String    = City.idToNamesMap.getOrElse(id, HtmlSanitizer.sanitizeHtml(rawName))
 
         City(id, countryId, name)
       }
