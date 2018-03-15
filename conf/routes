@@ -11,5 +11,5 @@ GET     /countries/:countryId/cities/:cityId/districts  com.mehmetakiftutuncu.mu
 GET     /prayerTimes/country/:countryId/city/:cityId                        com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getPrayerTimes(countryId: Int, cityId: Int, districtId: Option[Int] = None)
 GET     /prayerTimes/country/:countryId/city/:cityId/district/:districtId   com.mehmetakiftutuncu.muezzinapi.controllers.PrayerTimesController.getPrayerTimes(countryId: Int, cityId: Int, districtId: Option[Int])
 
-GET     /nuke       com.mehmetakiftutuncu.muezzinapi.controllers.NukeController.nuke(target: String, code: String)
-GET     /nukeCache  com.mehmetakiftutuncu.muezzinapi.controllers.NukeController.nukeCache(code: String)
+GET     /nuke/*target   com.mehmetakiftutuncu.muezzinapi.controllers.NukeController.nuke(target: String, code: String)
+GET     /nukeCache      com.mehmetakiftutuncu.muezzinapi.controllers.NukeController.nukeCache(code: String)

@@ -14,16 +14,25 @@ import play.api.mvc._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Promise
+import scala.util.Try
 
 @Singleton
 class NukeController @Inject()(Cache: AbstractCache,
                                ControllerComponents: ControllerComponents,
                                Conf: AbstractConf,
                                FirebaseRealtimeDatabase: AbstractFirebaseRealtimeDatabase) extends AbstractController(ControllerComponents) with ControllerExtras {
-  private val whatCanBeNuked: Set[String] = Set("countries", "prayerTimes")
+  private val whatCanBeNuked: Set[String] = Set(
+    "countries",
+    "prayerTimes",
+    "country",
+    "city",
+    "district"
+  )
 
   def nuke(target: String, code: String): Action[AnyContent] = Action.async {
-    if (!whatCanBeNuked.contains(target)) {
+    val isValidNukeTarget: Boolean = target.split("/").forall(t => whatCanBeNuked.contains(t) || Try(t.toInt).isSuccess)
+
+    if (!isValidNukeTarget) {
       futureFailWithErrors("You don't know what you're nuking!", Errors(CommonError.invalidData.reason("Invalid nuke target!").data(target)))
     } else if (!Conf.getString("muezzinApi.nuke.code").contains(code)) {
       futureFailWithErrors("You don't know nuke codes!", Errors(CommonError.authorization.reason("Invalid nuke code!")))
