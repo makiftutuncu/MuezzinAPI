@@ -1,20 +1,20 @@
 package com.mehmetakiftutuncu.muezzinapi.controllers
 
-import javax.inject.{Inject, Singleton}
-
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
 import com.mehmetakiftutuncu.muezzinapi.models.{City, Country, District}
 import com.mehmetakiftutuncu.muezzinapi.services._
-import com.mehmetakiftutuncu.muezzinapi.utilities.ControllerBase
+import com.mehmetakiftutuncu.muezzinapi.utilities.ControllerExtras
+import javax.inject.{Inject, Singleton}
 import play.api.libs.json.{JsObject, JsString, Json}
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
-class PlaceController @Inject()(CountryService: AbstractCountryService,
+class PlaceController @Inject()(ControllerComponents: ControllerComponents,
+                                CountryService: AbstractCountryService,
                                 CityService: AbstractCityService,
-                                DistrictService: AbstractDistrictService) extends ControllerBase {
+                                DistrictService: AbstractDistrictService) extends AbstractController(ControllerComponents) with ControllerExtras {
   def getCountries: Action[AnyContent] = Action.async {
     val log: String = s"""Failed to get countries!"""
 

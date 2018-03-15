@@ -1,10 +1,9 @@
 package com.mehmetakiftutuncu.muezzinapi
 
-import javax.inject.{Inject, Singleton}
-
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
 import com.google.inject.Provider
-import com.mehmetakiftutuncu.muezzinapi.utilities.{ControllerBase, Log, Logging}
+import com.mehmetakiftutuncu.muezzinapi.utilities.{ControllerExtras, Log}
+import javax.inject.{Inject, Singleton}
 import play.api.http.DefaultHttpErrorHandler
 import play.api.mvc.{RequestHeader, Result}
 import play.api.routing.Router
@@ -16,7 +15,7 @@ import scala.concurrent.Future
 class ErrorHandler @Inject()(Environment: Environment,
                              Config: Configuration,
                              SourceMapper: OptionalSourceMapper,
-                             Router: Provider[Router]) extends DefaultHttpErrorHandler(Environment, Config, SourceMapper, Router) with ControllerBase with Logging {
+                             Router: Provider[Router]) extends DefaultHttpErrorHandler(Environment, Config, SourceMapper, Router) with ControllerExtras {
   override protected def onProdServerError(request: RequestHeader, exception: UsefulException): Future[Result] = {
     val errors: Errors = Errors(CommonError.requestFailed.reason(exception.getMessage))
 

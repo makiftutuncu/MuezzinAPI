@@ -1,7 +1,6 @@
 package com.mehmetakiftutuncu.muezzinapi.services
 
 import java.time.Duration
-import javax.inject.{Inject, Singleton}
 
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors, Maybe}
 import com.google.firebase.database.DatabaseReference.CompletionListener
@@ -12,6 +11,7 @@ import com.mehmetakiftutuncu.muezzinapi.data.{AbstractCache, AbstractFirebaseRea
 import com.mehmetakiftutuncu.muezzinapi.models.District
 import com.mehmetakiftutuncu.muezzinapi.services.fetchers.AbstractDistrictFetcherService
 import com.mehmetakiftutuncu.muezzinapi.utilities.{Log, Logging, Timer}
+import javax.inject.{Inject, Singleton}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
@@ -31,50 +31,50 @@ class DistrictService @Inject()(Cache: AbstractCache,
 
     val cacheKey: String = (FirebaseRealtimeDatabase.root / "countries" / countryId / "cities" / cityId / "districts").cacheKey
 
-    val districtsFromCacheAsOpt: Option[List[District]] = Cache.get[List[District]](cacheKey)
+    Cache.get[List[District]](cacheKey).flatMap { districtsFromCacheAsOpt: Option[List[District]] =>
+      if (districtsFromCacheAsOpt.isDefined) {
+        Future.successful(Maybe(districtsFromCacheAsOpt.get))
+      } else {
 
-    if (districtsFromCacheAsOpt.isDefined) {
-      Future.successful(Maybe(districtsFromCacheAsOpt.get))
-    } else {
-
-      getDistrictsFromFirebase(countryId, cityId).flatMap {
-        maybeDistrictsFromFirebase: Maybe[List[District]] =>
-          if (maybeDistrictsFromFirebase.hasErrors) {
-            Future.successful(Maybe(maybeDistrictsFromFirebase.errors))
-          } else {
-            val districtsFromFirebase: List[District] = maybeDistrictsFromFirebase.value
-
-            if (districtsFromFirebase.nonEmpty) {
-              Cache.set[List[District]](cacheKey, districtsFromFirebase)
-
-              Future.successful(Maybe(districtsFromFirebase))
+        getDistrictsFromFirebase(countryId, cityId).flatMap {
+          maybeDistrictsFromFirebase: Maybe[List[District]] =>
+            if (maybeDistrictsFromFirebase.hasErrors) {
+              Future.successful(Maybe(maybeDistrictsFromFirebase.errors))
             } else {
-              DistrictFetcherService.getDistricts(countryId, cityId).flatMap {
-                maybeDistricts: Maybe[List[District]] =>
-                  if (maybeDistricts.hasErrors) {
-                    Future.successful(Maybe(maybeDistricts.errors))
-                  } else {
-                    val districts: List[District] = maybeDistricts.value
+              val districtsFromFirebase: List[District] = maybeDistrictsFromFirebase.value
 
-                    setDistrictsToFirebase(countryId, cityId, districts).map {
-                      setErrors: Errors =>
-                        if (setErrors.hasErrors) {
-                          Maybe(setErrors)
-                        } else {
-                          Cache.set[List[District]](cacheKey, districts)
+              if (districtsFromFirebase.nonEmpty) {
+                Cache.set[List[District]](cacheKey, districtsFromFirebase)
 
-                          Maybe(districts)
-                        }
+                Future.successful(Maybe(districtsFromFirebase))
+              } else {
+                DistrictFetcherService.getDistricts(countryId, cityId).flatMap {
+                  maybeDistricts: Maybe[List[District]] =>
+                    if (maybeDistricts.hasErrors) {
+                      Future.successful(Maybe(maybeDistricts.errors))
+                    } else {
+                      val districts: List[District] = maybeDistricts.value
+
+                      setDistrictsToFirebase(countryId, cityId, districts).map {
+                        setErrors: Errors =>
+                          if (setErrors.hasErrors) {
+                            Maybe(setErrors)
+                          } else {
+                            Cache.set[List[District]](cacheKey, districts)
+
+                            Maybe(districts)
+                          }
+                      }
                     }
-                  }
+                }
               }
             }
-          }
-      }.recover {
-        case NonFatal(t: Throwable) =>
-          val errors: Errors = Errors(CommonError.database.reason(t.getMessage))
-          Log.error(log, errors, t)
-          Maybe(errors)
+        }.recover {
+          case NonFatal(t: Throwable) =>
+            val errors: Errors = Errors(CommonError.database.reason(t.getMessage))
+            Log.error(log, errors, t)
+            Maybe(errors)
+        }
       }
     }
   }

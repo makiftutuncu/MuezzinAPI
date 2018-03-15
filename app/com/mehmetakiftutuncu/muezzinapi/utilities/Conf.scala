@@ -1,12 +1,12 @@
 package com.mehmetakiftutuncu.muezzinapi.utilities
 
 import java.util.concurrent.TimeUnit
-import javax.inject.{Inject, Singleton}
 
 import com.google.inject.ImplementedBy
+import javax.inject.{Inject, Singleton}
 import play.api.{Configuration, Environment}
 
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
 @ImplementedBy(classOf[Conf])
 trait AbstractConf {
@@ -22,11 +22,11 @@ class Conf @Inject()(environment: Environment) extends AbstractConf {
   private val configuration: Configuration = Configuration.load(environment)
 
   override def getBoolean(path: String, defaultValue: Boolean): Boolean = {
-    configuration.getBoolean(path).getOrElse(defaultValue)
+    configuration.getOptional[Boolean](path).getOrElse(defaultValue)
   }
 
   override def getString(path: String): Option[String] = {
-    configuration.getString(path)
+    configuration.getOptional[String](path)
   }
 
   override def getString(path: String, defaultValue: String): String = {
@@ -34,7 +34,7 @@ class Conf @Inject()(environment: Environment) extends AbstractConf {
   }
 
   override def getFiniteDuration(path: String): Option[FiniteDuration] = {
-    configuration.getMilliseconds(path).map(FiniteDuration(_, TimeUnit.MILLISECONDS))
+    configuration.getOptional[Duration](path).map(d => FiniteDuration(d.toMillis, TimeUnit.MILLISECONDS))
   }
 
   override def getFiniteDuration(path: String, defaultValue: FiniteDuration): FiniteDuration = {

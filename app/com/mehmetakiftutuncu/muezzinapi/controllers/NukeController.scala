@@ -1,23 +1,24 @@
 package com.mehmetakiftutuncu.muezzinapi.controllers
 
 import java.time.Duration
-import javax.inject.{Inject, Singleton}
 
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
 import com.google.firebase.database.DatabaseReference.CompletionListener
 import com.google.firebase.database.{DatabaseError, DatabaseReference}
-import com.mehmetakiftutuncu.muezzinapi.data.FirebaseRealtimeDatabase._
 import com.mehmetakiftutuncu.muezzinapi.data.AbstractFirebaseRealtimeDatabase
-import com.mehmetakiftutuncu.muezzinapi.utilities.{AbstractConf, ControllerBase, Log, Timer}
+import com.mehmetakiftutuncu.muezzinapi.data.FirebaseRealtimeDatabase._
+import com.mehmetakiftutuncu.muezzinapi.utilities.{AbstractConf, ControllerExtras, Log, Timer}
+import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Promise
 
 @Singleton
-class NukeController @Inject()(Conf: AbstractConf,
-                               FirebaseRealtimeDatabase: AbstractFirebaseRealtimeDatabase) extends ControllerBase {
+class NukeController @Inject()(ControllerComponents: ControllerComponents,
+                               Conf: AbstractConf,
+                               FirebaseRealtimeDatabase: AbstractFirebaseRealtimeDatabase) extends AbstractController(ControllerComponents) with ControllerExtras {
   private val whatCanBeNuked: Set[String] = Set("countries", "prayerTimes")
 
   def nuke(target: String, code: String): Action[AnyContent] = Action.async {

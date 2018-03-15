@@ -1,12 +1,12 @@
 package com.mehmetakiftutuncu.muezzinapi.services.fetchers
 
 import java.time.Duration
-import javax.inject.{Inject, Singleton}
 
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors, Maybe}
 import com.google.inject.ImplementedBy
 import com.mehmetakiftutuncu.muezzinapi.models.City
 import com.mehmetakiftutuncu.muezzinapi.utilities._
+import javax.inject.{Inject, Singleton}
 import play.api.http.{HeaderNames, MimeTypes, Status}
 import play.api.libs.json.{JsArray, JsValue}
 import play.api.libs.ws.WSResponse
@@ -30,7 +30,7 @@ class CityFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) extends A
 
       val url: String = Conf.getString("muezzinApi.diyanet.citiesUrl", "")
 
-      WS.url(url).withQueryString("ChangeType" -> "country", "CountryId" -> countryId.toString).get().map {
+      WS.url(url).addQueryStringParameters("ChangeType" -> "country", "CountryId" -> countryId.toString).get().map {
         wsResponse: WSResponse =>
           val fetchDuration: Duration = Timer.stop(s"fetchCities.$countryId")
 

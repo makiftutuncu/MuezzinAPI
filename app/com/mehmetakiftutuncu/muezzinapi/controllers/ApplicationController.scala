@@ -1,12 +1,11 @@
 package com.mehmetakiftutuncu.muezzinapi.controllers
 
-import javax.inject.Singleton
-
-import com.mehmetakiftutuncu.muezzinapi.utilities.ControllerBase
-import play.api.mvc.{Action, AnyContent}
+import com.mehmetakiftutuncu.muezzinapi.utilities.ControllerExtras
+import javax.inject.{Inject, Singleton}
+import play.api.mvc.{AbstractController, Action, AnyContent, ControllerComponents}
 
 @Singleton
-class ApplicationController extends ControllerBase {
+class ApplicationController @Inject()(controllerComponents: ControllerComponents) extends AbstractController(controllerComponents) with ControllerExtras {
   def index: Action[AnyContent] = Action(Ok("Welcome to Muezzin API!"))
 
   def empty: Action[AnyContent] = Action(Ok)

@@ -1,22 +1,24 @@
 name := """MuezzinAPI"""
 
-version := "2.2.2"
+version := "2.3"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
-scalaVersion := "2.11.11"
+scalaVersion := "2.12.4"
 
 libraryDependencies ++= Seq(
-  cache,
+  ehcache,
+  guice,
   ws,
-  "com.google.firebase"           % "firebase-admin" % "5.0.0",
-  "com.github.mehmetakiftutuncu" %% "errors"         % "1.1",
-  "com.typesafe.akka"            %% "akka-actor"     % "2.4.17",
-  "org.jsoup"                     % "jsoup"          % "1.10.3",
-  "org.specs2"                   %% "specs2-core"    % "3.9.0" % Test
+  "com.google.firebase"           % "firebase-admin" % "5.9.0",
+  "com.github.mehmetakiftutuncu" %% "errors"         % "1.2",
+  "com.typesafe.akka"            %% "akka-actor"     % "2.5.11",
+  "org.jsoup"                     % "jsoup"          % "1.11.2",
+  "org.specs2"                   %% "specs2-core"    % "4.0.2" % Test,
+  "org.specs2"                   %% "specs2-junit"   % "4.0.2" % Test
 )
 
-resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
+resolvers += Resolver.sbtPluginRepo("releases")
 
 routesImport += "com.mehmetakiftutuncu.muezzinapi.utilities.OptionIntPathBindable._"
 

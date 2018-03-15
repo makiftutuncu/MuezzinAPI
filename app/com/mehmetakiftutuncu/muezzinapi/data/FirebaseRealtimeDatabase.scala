@@ -1,13 +1,13 @@
 package com.mehmetakiftutuncu.muezzinapi.data
 
 import java.io.FileInputStream
-import javax.inject.Inject
 
-import com.google.firebase.auth.FirebaseCredentials
+import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.database.{DataSnapshot, DatabaseReference, FirebaseDatabase}
 import com.google.firebase.{FirebaseApp, FirebaseOptions}
 import com.google.inject.{ImplementedBy, Singleton}
 import com.mehmetakiftutuncu.muezzinapi.utilities.{AbstractConf, Log, Logging}
+import javax.inject.Inject
 import play.api.inject.ApplicationLifecycle
 
 import scala.concurrent.Future
@@ -24,7 +24,7 @@ class FirebaseRealtimeDatabase @Inject()(ApplicationLifecycle: ApplicationLifecy
   private val databaseUrl: String     = Conf.getString("muezzinApi.firebaseRealtimeDatabase.databaseUrl", "")
 
   private val firebaseOptions: FirebaseOptions = new FirebaseOptions.Builder()
-    .setCredential(FirebaseCredentials.fromCertificate(new FileInputStream(credentialsFile)))
+    .setCredentials(GoogleCredentials.fromStream(new FileInputStream(credentialsFile)))
     .setDatabaseUrl(databaseUrl)
     .build()
 

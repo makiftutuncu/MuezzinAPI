@@ -3,11 +3,12 @@ package com.mehmetakiftutuncu.muezzinapi.utilities
 import com.github.mehmetakiftutuncu.errors.Errors
 import play.api.http.ContentTypes
 import play.api.libs.json.JsValue
-import play.api.mvc.{Codec, Controller, Result}
+import play.api.mvc.Results.{Ok, ServiceUnavailable}
+import play.api.mvc.{Codec, Result}
 
 import scala.concurrent.Future
 
-trait ControllerBase extends Controller with Logging {
+trait ControllerExtras extends Logging {
   private val utf8JsonContentType: String = ContentTypes.withCharset(ContentTypes.JSON)(Codec.utf_8)
 
   protected def success(result: JsValue): Result = {

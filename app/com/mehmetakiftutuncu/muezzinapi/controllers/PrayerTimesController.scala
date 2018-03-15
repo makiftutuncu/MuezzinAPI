@@ -1,21 +1,21 @@
 package com.mehmetakiftutuncu.muezzinapi.controllers
 
-import javax.inject.{Inject, Singleton}
-
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
 import com.mehmetakiftutuncu.muezzinapi.models._
 import com.mehmetakiftutuncu.muezzinapi.services._
-import com.mehmetakiftutuncu.muezzinapi.utilities.ControllerBase
+import com.mehmetakiftutuncu.muezzinapi.utilities.ControllerExtras
+import javax.inject.{Inject, Singleton}
 import play.api.libs.json.{JsObject, Json}
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
-class PrayerTimesController @Inject()(CountryService: AbstractCountryService,
+class PrayerTimesController @Inject()(ControllerComponents: ControllerComponents,
+                                      CountryService: AbstractCountryService,
                                       CityService: AbstractCityService,
                                       DistrictService: AbstractDistrictService,
-                                      PrayerTimesService: AbstractPrayerTimesService) extends ControllerBase {
+                                      PrayerTimesService: AbstractPrayerTimesService) extends AbstractController(ControllerComponents) with ControllerExtras {
   def getPrayerTimes(countryId: Int, cityId: Int, districtId: Option[Int]): Action[AnyContent] = Action.async {
     val log: String = s"""Failed to get prayer times for country "$countryId", city "$cityId" and district "$districtId"!"""
 

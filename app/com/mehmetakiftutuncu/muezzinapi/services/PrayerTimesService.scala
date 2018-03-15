@@ -1,7 +1,6 @@
 package com.mehmetakiftutuncu.muezzinapi.services
 
 import java.time.Duration
-import javax.inject.{Inject, Singleton}
 
 import com.github.mehmetakiftutuncu.errors.{Maybe, _}
 import com.google.firebase.database.DatabaseReference.CompletionListener
@@ -12,6 +11,7 @@ import com.mehmetakiftutuncu.muezzinapi.data.{AbstractCache, AbstractFirebaseRea
 import com.mehmetakiftutuncu.muezzinapi.models.{Place, PrayerTimesOfDay}
 import com.mehmetakiftutuncu.muezzinapi.services.fetchers.AbstractPrayerTimesFetcherService
 import com.mehmetakiftutuncu.muezzinapi.utilities.{Log, Logging, Timer}
+import javax.inject.{Inject, Singleton}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
@@ -34,49 +34,49 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
 
     val cacheKey: String = (prayerTimesReference / place.toPath).cacheKey
 
-    val prayerTimesFromCacheAsOpt: Option[List[PrayerTimesOfDay]] = Cache.get[List[PrayerTimesOfDay]](cacheKey)
-
-    if (prayerTimesFromCacheAsOpt.isDefined) {
-      Future.successful(Maybe(prayerTimesFromCacheAsOpt.get))
-    } else {
-      getPrayerTimesFromFirebase(place).flatMap {
-        maybePrayerTimesFromFirebase: Maybe[List[PrayerTimesOfDay]] =>
-          if (maybePrayerTimesFromFirebase.hasErrors) {
-            Future.successful(Maybe(maybePrayerTimesFromFirebase.errors))
-          } else {
-            val prayerTimesFromFirebase: List[PrayerTimesOfDay] = maybePrayerTimesFromFirebase.value
-
-            if (prayerTimesFromFirebase.nonEmpty) {
-              Cache.set[List[PrayerTimesOfDay]](cacheKey, prayerTimesFromFirebase)
-
-              Future.successful(Maybe(prayerTimesFromFirebase))
+    Cache.get[List[PrayerTimesOfDay]](cacheKey).flatMap { prayerTimesFromCacheAsOpt: Option[List[PrayerTimesOfDay]] =>
+      if (prayerTimesFromCacheAsOpt.isDefined) {
+        Future.successful(Maybe(prayerTimesFromCacheAsOpt.get))
+      } else {
+        getPrayerTimesFromFirebase(place).flatMap {
+          maybePrayerTimesFromFirebase: Maybe[List[PrayerTimesOfDay]] =>
+            if (maybePrayerTimesFromFirebase.hasErrors) {
+              Future.successful(Maybe(maybePrayerTimesFromFirebase.errors))
             } else {
-              PrayerTimesFetcherService.getPrayerTimes(place).flatMap {
-                maybePrayerTimes: Maybe[List[PrayerTimesOfDay]] =>
-                  if (maybePrayerTimes.hasErrors) {
-                    Future.successful(Maybe(maybePrayerTimes.errors))
-                  } else {
-                    val prayerTimes: List[PrayerTimesOfDay] = maybePrayerTimes.value
+              val prayerTimesFromFirebase: List[PrayerTimesOfDay] = maybePrayerTimesFromFirebase.value
 
-                    setPrayerTimesToFirebase(place, prayerTimes).map {
-                      setErrors: Errors =>
-                        if (setErrors.hasErrors) {
-                          Maybe(setErrors)
-                        } else {
-                          Cache.set[List[PrayerTimesOfDay]](cacheKey, prayerTimes)
+              if (prayerTimesFromFirebase.nonEmpty) {
+                Cache.set[List[PrayerTimesOfDay]](cacheKey, prayerTimesFromFirebase)
 
-                          Maybe(prayerTimes)
-                        }
+                Future.successful(Maybe(prayerTimesFromFirebase))
+              } else {
+                PrayerTimesFetcherService.getPrayerTimes(place).flatMap {
+                  maybePrayerTimes: Maybe[List[PrayerTimesOfDay]] =>
+                    if (maybePrayerTimes.hasErrors) {
+                      Future.successful(Maybe(maybePrayerTimes.errors))
+                    } else {
+                      val prayerTimes: List[PrayerTimesOfDay] = maybePrayerTimes.value
+
+                      setPrayerTimesToFirebase(place, prayerTimes).map {
+                        setErrors: Errors =>
+                          if (setErrors.hasErrors) {
+                            Maybe(setErrors)
+                          } else {
+                            Cache.set[List[PrayerTimesOfDay]](cacheKey, prayerTimes)
+
+                            Maybe(prayerTimes)
+                          }
+                      }
                     }
-                  }
+                }
               }
             }
-          }
-      }.recover {
-        case NonFatal(t: Throwable) =>
-          val errors: Errors = Errors(CommonError.database.reason(t.getMessage))
-          Log.error(log, errors, t)
-          Maybe(errors)
+        }.recover {
+          case NonFatal(t: Throwable) =>
+            val errors: Errors = Errors(CommonError.database.reason(t.getMessage))
+            Log.error(log, errors, t)
+            Maybe(errors)
+        }
       }
     }
   }
