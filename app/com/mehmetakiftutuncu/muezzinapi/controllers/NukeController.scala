@@ -5,8 +5,8 @@ import java.time.Duration
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
 import com.google.firebase.database.DatabaseReference.CompletionListener
 import com.google.firebase.database.{DatabaseError, DatabaseReference}
-import com.mehmetakiftutuncu.muezzinapi.data.AbstractFirebaseRealtimeDatabase
 import com.mehmetakiftutuncu.muezzinapi.data.FirebaseRealtimeDatabase._
+import com.mehmetakiftutuncu.muezzinapi.data.{AbstractCache, AbstractFirebaseRealtimeDatabase}
 import com.mehmetakiftutuncu.muezzinapi.utilities.{AbstractConf, ControllerExtras, Log, Timer}
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Json
@@ -16,7 +16,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Promise
 
 @Singleton
-class NukeController @Inject()(ControllerComponents: ControllerComponents,
+class NukeController @Inject()(Cache: AbstractCache,
+                               ControllerComponents: ControllerComponents,
                                Conf: AbstractConf,
                                FirebaseRealtimeDatabase: AbstractFirebaseRealtimeDatabase) extends AbstractController(ControllerComponents) with ControllerExtras {
   private val whatCanBeNuked: Set[String] = Set("countries", "prayerTimes")
@@ -55,6 +56,22 @@ class NukeController @Inject()(ControllerComponents: ControllerComponents,
 
           success(Json.obj("target" -> "destroyed"))
         }
+      }
+    }
+  }
+
+  def nukeCache(code: String): Action[AnyContent] = Action.async {
+    if (!Conf.getString("muezzinApi.nuke.code").contains(code)) {
+      futureFailWithErrors("You don't know nuke codes!", Errors(CommonError.authorization.reason("Invalid nuke code!")))
+    } else {
+      Timer.start(s"nuke.cache")
+
+      Cache.flush().map { _ =>
+        val duration: Duration = Timer.stop(s"nuke.cache")
+
+        Log.debug(s"""Successfully nuked cache in ${duration.toMillis} ms.""")
+
+        success(Json.obj("cache" -> "flushed"))
       }
     }
   }

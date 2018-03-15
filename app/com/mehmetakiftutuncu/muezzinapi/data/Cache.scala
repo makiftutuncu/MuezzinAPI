@@ -18,6 +18,7 @@ trait AbstractCache {
   def get[T: ClassTag](key: String)(implicit ec: ExecutionContext): Future[Option[T]]
   def set[T: ClassTag](key: String, value: T, timeout: FiniteDuration = timeout)(implicit ec: ExecutionContext): Future[Unit]
   def remove(key: String)(implicit ec: ExecutionContext): Future[Unit]
+  def flush()(implicit ec: ExecutionContext): Future[Unit]
 }
 
 @Singleton
@@ -40,5 +41,11 @@ class Cache @Inject()(CacheApi: AsyncCacheApi, Conf: AbstractConf) extends Abstr
     Log.debug(s"""Removing "$key" from cache...""")
 
     CacheApi.remove(key).map(_ => ())
+  }
+
+  override def flush()(implicit ec: ExecutionContext): Future[Unit] = {
+    Log.debug(s"""Flushing cache...""")
+
+    CacheApi.removeAll().map(_ => ())
   }
 }
