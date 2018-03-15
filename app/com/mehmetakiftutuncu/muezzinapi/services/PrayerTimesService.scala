@@ -36,7 +36,7 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
 
     Cache.get[List[PrayerTimesOfDay]](cacheKey).flatMap { prayerTimesFromCacheAsOpt: Option[List[PrayerTimesOfDay]] =>
       if (prayerTimesFromCacheAsOpt.isDefined) {
-        Future.successful(Maybe(prayerTimesFromCacheAsOpt.get))
+        Future.successful(Maybe(filterOutOldPrayerTimes(prayerTimesFromCacheAsOpt.get)))
       } else {
         getPrayerTimesFromFirebase(place).flatMap {
           maybePrayerTimesFromFirebase: Maybe[List[PrayerTimesOfDay]] =>
@@ -57,15 +57,19 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
                     } else {
                       val prayerTimes: List[PrayerTimesOfDay] = maybePrayerTimes.value
 
-                      setPrayerTimesToFirebase(place, prayerTimes).map {
-                        setErrors: Errors =>
-                          if (setErrors.hasErrors) {
-                            Maybe(setErrors)
-                          } else {
-                            Cache.set[List[PrayerTimesOfDay]](cacheKey, prayerTimes)
+                      if (prayerTimes.isEmpty) {
+                        Future.successful(Maybe(Errors.empty))
+                      } else {
+                        setPrayerTimesToFirebase(place, prayerTimes).map {
+                          setErrors: Errors =>
+                            if (setErrors.hasErrors) {
+                              Maybe(setErrors)
+                            } else {
+                              Cache.set[List[PrayerTimesOfDay]](cacheKey, prayerTimes)
 
-                            Maybe(prayerTimes)
-                          }
+                              Maybe(prayerTimes)
+                            }
+                        }
                       }
                     }
                 }
@@ -162,7 +166,7 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
                 PrayerTimesOfDay(date, fajr, shuruq, dhuhr, asr, maghrib, isha, qibla)
             }
 
-            promise.success(Maybe(prayerTimes))
+            promise.success(Maybe(filterOutOldPrayerTimes(prayerTimes)))
           } catch {
             case NonFatal(t: Throwable) =>
               Log.error(log, Errors(CommonError.database.reason(t.getMessage)), t)

@@ -1,12 +1,13 @@
 package com.mehmetakiftutuncu.muezzinapi.services.fetchers
 
 import java.time.{Duration, LocalDate}
-import javax.inject.{Inject, Singleton}
 
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors, Maybe}
 import com.google.inject.ImplementedBy
 import com.mehmetakiftutuncu.muezzinapi.models.{Place, PrayerTimesOfDay}
+import com.mehmetakiftutuncu.muezzinapi.services.filterOutOldPrayerTimes
 import com.mehmetakiftutuncu.muezzinapi.utilities._
+import javax.inject.{Inject, Singleton}
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Document, Element}
 import play.api.http.{HeaderNames, MimeTypes, Status}
@@ -95,7 +96,7 @@ class PrayerTimesFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) ex
         PrayerTimesOfDay(LocalDate.parse(date, PrayerTimesOfDay.diyanetDateFormatter), fajr, shuruq, dhuhr, asr, maghrib, isha, None)
       }
 
-      Maybe(prayerTimes)
+      Maybe(filterOutOldPrayerTimes(prayerTimes))
     } catch {
       case NonFatal(t: Throwable) =>
         val errors: Errors = Errors(CommonError("parseFailed").reason(t.getMessage))
