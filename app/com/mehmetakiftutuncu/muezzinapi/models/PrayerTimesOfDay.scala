@@ -14,8 +14,8 @@ case class PrayerTimesOfDay(date: LocalDate,
                             maghrib: PrayerTime,
                             isha: PrayerTime,
                             qibla: Option[PrayerTime]) {
-  def toJson: JsObject = Json.obj(
-    date.format(PrayerTimesOfDay.dateFormatter) -> {
+  def toJson(dateFormatter: DateTimeFormatter): JsObject = Json.obj(
+    date.format(dateFormatter) -> {
       fajr.toJson    ++
       shuruq.toJson  ++
       dhuhr.toJson   ++
@@ -43,10 +43,8 @@ case class PrayerTimesOfDay(date: LocalDate,
 }
 
 object PrayerTimesOfDay {
-  val dateFormatter: DateTimeFormatter        = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.US)
-  val diyanetDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.US)
-
-  def apply(date: String,
+  def apply(dateFormatter: DateTimeFormatter,
+            date: String,
             fajr: String,
             shuruq: String,
             dhuhr: String,

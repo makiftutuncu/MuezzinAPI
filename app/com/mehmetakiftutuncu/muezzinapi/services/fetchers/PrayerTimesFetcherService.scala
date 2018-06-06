@@ -24,7 +24,7 @@ trait AbstractPrayerTimesFetcherService {
 }
 
 @Singleton
-class PrayerTimesFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) extends AbstractPrayerTimesFetcherService with Logging {
+class PrayerTimesFetcherService @Inject()(Conf: AbstractConf, DateFormatter: DateFormatter, WS: AbstractWS) extends AbstractPrayerTimesFetcherService with Logging {
   override def getPrayerTimes(place: Place): Future[Maybe[List[PrayerTimesOfDay]]] = {
     val log: String = s"Failed to get prayer times for ${place.toLog}!"
 
@@ -93,7 +93,7 @@ class PrayerTimesFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) ex
         val maghrib: String = trArrayForDay(5).text()
         val isha: String    = trArrayForDay(6).text()
 
-        PrayerTimesOfDay(LocalDate.parse(date, PrayerTimesOfDay.diyanetDateFormatter), fajr, shuruq, dhuhr, asr, maghrib, isha, None)
+        PrayerTimesOfDay(LocalDate.parse(date, DateFormatter.diyanetDateFormatter), fajr, shuruq, dhuhr, asr, maghrib, isha, None)
       }
 
       Maybe(filterOutOldPrayerTimes(prayerTimes))

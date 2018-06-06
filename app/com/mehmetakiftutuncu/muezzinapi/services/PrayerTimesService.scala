@@ -10,7 +10,7 @@ import com.mehmetakiftutuncu.muezzinapi.data.FirebaseRealtimeDatabase._
 import com.mehmetakiftutuncu.muezzinapi.data.{AbstractCache, AbstractFirebaseRealtimeDatabase}
 import com.mehmetakiftutuncu.muezzinapi.models.{Place, PrayerTimesOfDay}
 import com.mehmetakiftutuncu.muezzinapi.services.fetchers.AbstractPrayerTimesFetcherService
-import com.mehmetakiftutuncu.muezzinapi.utilities.{Log, Logging, Timer}
+import com.mehmetakiftutuncu.muezzinapi.utilities.{DateFormatter, Log, Logging, Timer}
 import javax.inject.{Inject, Singleton}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -26,7 +26,8 @@ trait AbstractPrayerTimesService {
 @Singleton
 class PrayerTimesService @Inject()(Cache: AbstractCache,
                                    FirebaseRealtimeDatabase: AbstractFirebaseRealtimeDatabase,
-                                   PrayerTimesFetcherService: AbstractPrayerTimesFetcherService) extends AbstractPrayerTimesService with Logging {
+                                   PrayerTimesFetcherService: AbstractPrayerTimesFetcherService,
+                                   DateFormatter: DateFormatter) extends AbstractPrayerTimesService with Logging {
   private val prayerTimesReference: DatabaseReference = FirebaseRealtimeDatabase.root / "prayerTimes"
 
   override def getPrayerTimes(place: Place): Future[Maybe[List[PrayerTimesOfDay]]] = {
@@ -92,12 +93,12 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
 
     val setErrorFutures: List[Future[Errors]] = prayerTimes.map {
       prayerTimesOfDay: PrayerTimesOfDay =>
-        val key: String = prayerTimesOfDay.date.format(PrayerTimesOfDay.dateFormatter)
+        val key: String = prayerTimesOfDay.date.format(DateFormatter.dateFormatter)
         val prayerTimesOfDayReference: DatabaseReference = prayerTimesReferenceForPlace / key
 
         val promise: Promise[Errors] = Promise[Errors]()
 
-        prayerTimesOfDayReference.updateChildren(prayerTimesOfDay.toJavaMap, new CompletionListener {
+        val listener = new CompletionListener {
           override def onComplete(databaseError: DatabaseError, databaseReference: DatabaseReference): Unit = {
             val errors: Errors = if (databaseError != null) {
               Errors(CommonError.database.reason(databaseError.toException.getMessage).data(key))
@@ -107,7 +108,9 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
 
             promise.success(errors)
           }
-        })
+        }
+
+        prayerTimesOfDayReference.updateChildren(prayerTimesOfDay.toJavaMap, listener)
 
         promise.future
     }
@@ -163,7 +166,7 @@ class PrayerTimesService @Inject()(Cache: AbstractCache,
 
                 val qibla: Option[String] = Option((currentDataSnapshot / "qibla").getValue(classOf[String]))
 
-                PrayerTimesOfDay(date, fajr, shuruq, dhuhr, asr, maghrib, isha, qibla)
+                PrayerTimesOfDay(DateFormatter.dateFormatter, date, fajr, shuruq, dhuhr, asr, maghrib, isha, qibla)
             }
 
             promise.success(Maybe(filterOutOldPrayerTimes(prayerTimes)))

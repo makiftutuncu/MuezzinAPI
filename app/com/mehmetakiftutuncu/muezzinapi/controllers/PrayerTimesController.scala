@@ -3,7 +3,7 @@ package com.mehmetakiftutuncu.muezzinapi.controllers
 import com.github.mehmetakiftutuncu.errors.{CommonError, Errors}
 import com.mehmetakiftutuncu.muezzinapi.models._
 import com.mehmetakiftutuncu.muezzinapi.services._
-import com.mehmetakiftutuncu.muezzinapi.utilities.ControllerExtras
+import com.mehmetakiftutuncu.muezzinapi.utilities.{ControllerExtras, DateFormatter}
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc._
@@ -15,7 +15,8 @@ class PrayerTimesController @Inject()(ControllerComponents: ControllerComponents
                                       CountryService: AbstractCountryService,
                                       CityService: AbstractCityService,
                                       DistrictService: AbstractDistrictService,
-                                      PrayerTimesService: AbstractPrayerTimesService) extends AbstractController(ControllerComponents) with ControllerExtras {
+                                      PrayerTimesService: AbstractPrayerTimesService,
+                                      DateFormatter: DateFormatter) extends AbstractController(ControllerComponents) with ControllerExtras {
   def getPrayerTimes(countryId: Int, cityId: Int, districtId: Option[Int]): Action[AnyContent] = Action.async {
     val log: String = s"""Failed to get prayer times for country "$countryId", city "$cityId" and district "$districtId"!"""
 
@@ -59,7 +60,7 @@ class PrayerTimesController @Inject()(ControllerComponents: ControllerComponents
 
                         case Right(prayerTimes: List[PrayerTimesOfDay]) =>
                           val result: JsObject = Json.obj(
-                            "prayerTimes" -> prayerTimes.foldLeft(Json.obj())(_ ++ _.toJson)
+                            "prayerTimes" -> prayerTimes.foldLeft(Json.obj())(_ ++ _.toJson(DateFormatter.dateFormatter))
                           )
 
                           success(result)

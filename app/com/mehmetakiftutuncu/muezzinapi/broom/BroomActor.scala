@@ -10,8 +10,7 @@ import com.google.firebase.database._
 import com.mehmetakiftutuncu.muezzinapi.broom.BroomActor.Wipe
 import com.mehmetakiftutuncu.muezzinapi.data.AbstractFirebaseRealtimeDatabase
 import com.mehmetakiftutuncu.muezzinapi.data.FirebaseRealtimeDatabase._
-import com.mehmetakiftutuncu.muezzinapi.models.PrayerTimesOfDay
-import com.mehmetakiftutuncu.muezzinapi.utilities.{AbstractConf, Log, Logging, Timer}
+import com.mehmetakiftutuncu.muezzinapi.utilities._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
@@ -19,6 +18,7 @@ import scala.concurrent.{Future, Promise}
 import scala.util.control.NonFatal
 
 class BroomActor(Conf: AbstractConf,
+                 DateFormatter: DateFormatter,
                  FirebaseRealtimeDatabase: AbstractFirebaseRealtimeDatabase) extends Actor with Logging {
   private val effect: FiniteDuration = Conf.getFiniteDuration("muezzinApi.broom.effect", FiniteDuration(1, TimeUnit.DAYS))
 
@@ -80,7 +80,7 @@ class BroomActor(Conf: AbstractConf,
                 val prayerTimeSnapshotsToWipeForCity: List[DataSnapshot] = if (districtSnapshots.isEmpty) {
                   citySnapshot.getChildren.iterator().asScala.toList.takeWhile {
                     dateSnapshot: DataSnapshot =>
-                      val date: LocalDate = LocalDate.parse(dateSnapshot.getKey, PrayerTimesOfDay.dateFormatter)
+                      val date: LocalDate = LocalDate.parse(dateSnapshot.getKey, DateFormatter.dateFormatter)
 
                       date.compareTo(startDate) < 1
                   }
@@ -89,7 +89,7 @@ class BroomActor(Conf: AbstractConf,
                     districtSnapshot: DataSnapshot =>
                       districtSnapshot.getChildren.iterator().asScala.toList.takeWhile {
                         dateSnapshot: DataSnapshot =>
-                          val date: LocalDate = LocalDate.parse(dateSnapshot.getKey, PrayerTimesOfDay.dateFormatter)
+                          val date: LocalDate = LocalDate.parse(dateSnapshot.getKey, DateFormatter.dateFormatter)
 
                           date.compareTo(startDate) < 1
                       }
@@ -125,7 +125,7 @@ class BroomActor(Conf: AbstractConf,
       prayerTimeReference: DatabaseReference =>
         val promise: Promise[Errors] = Promise[Errors]()
 
-        prayerTimeReference.removeValue(new CompletionListener {
+        val listener = new CompletionListener {
           override def onComplete(databaseError: DatabaseError, databaseReference: DatabaseReference): Unit = {
             val errors: Errors = if (databaseError != null) {
               Errors(CommonError.database.reason(databaseError.toException.getMessage).data(databaseReference.getKey))
@@ -135,7 +135,9 @@ class BroomActor(Conf: AbstractConf,
 
             promise.success(errors)
           }
-        })
+        }
+
+        prayerTimeReference.removeValue(listener)
 
         promise.future
     }
