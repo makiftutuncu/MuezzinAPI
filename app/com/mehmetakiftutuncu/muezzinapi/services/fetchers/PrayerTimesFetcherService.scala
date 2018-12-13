@@ -64,7 +64,7 @@ class PrayerTimesFetcherService @Inject()(Conf: AbstractConf, DateFormatter: Dat
       }.recover {
         case NonFatal(t: Throwable) =>
           val errors: Errors = Errors(CommonError.requestFailed.reason(t.getMessage))
-          Log.error(s"$log Future failed!", errors)
+          Log.error(s"$log Future failed!", errors, t)
 
           Maybe(errors)
       }
