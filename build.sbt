@@ -1,6 +1,6 @@
 name := """MuezzinAPI"""
 
-version := "2.4.0"
+version := "2.4.1"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
