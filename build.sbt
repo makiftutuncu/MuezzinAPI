@@ -2,7 +2,7 @@ name := """MuezzinAPI"""
 
 version := "2.4.1"
 
-lazy val root = (project in file(".")).enablePlugins(PlayScala)
+lazy val root = (project in file(".")).enablePlugins(PlayScala, ElasticBeanstalkPlugin)
 
 scalaVersion := "2.12.4"
 
@@ -23,3 +23,13 @@ resolvers += Resolver.sbtPluginRepo("releases")
 routesImport += "com.mehmetakiftutuncu.muezzinapi.utilities.OptionIntPathBindable._"
 
 scalacOptions in Test ++= Seq("-Yrangepos")
+
+packageName in ElasticBeanstalk := "muezzin-api"
+elasticBeanstalkSources in ElasticBeanstalk := Seq(
+  baseDirectory.value / "Dockerrun.aws.json"
+)
+dockerLabels := Map(
+ "maintainer" -> "Mehmet Akif Tütüncü <m.akif.tutuncu@gmail.com>"
+)
+dockerExposedPorts := Seq(9000)
+dockerBaseImage := "java:latest"

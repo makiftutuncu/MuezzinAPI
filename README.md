@@ -11,8 +11,29 @@ Technical Details
 --------------
 Muezzin API application is developed using [**Play Framework**](https://www.playframework.com/) and [**Scala**](http://www.scala-lang.org/). The application utilizes [**Akka Actors**](http://akka.io/) actors for scheduling jobs, [**WS**](https://www.playframework.com/documentation/latest/ScalaWS) for making HTTP requests, [**Firebase Realtime Database**](https://firebase.google.com/docs/database/) for data persistance and [**Errors**](https://github.com/mehmetakiftutuncu/Errors) for error handling.
 
+Deploying Muezzin API to AWS ElasticBeanstalk
+-------------
+Add host of your EB host to [application.conf](conf/application.conf) under `play.filters.hosts.allowed`. Here's an example:
+```
+play {
+  filters.hosts {
+    allowed = [
+      "muezzin.123456.eu-west-1.elasticbeanstalk.com",
+      "muezzin.herokuapp.com",
+      "muezzin-staging.herokuapp.com",
+      "localhost:9000"
+    ]
+  }
+}
+```
+
+Then run `sbt elastic-beanstalk:dist` to create ZIP file that you can upload to your ElasticBeanstalk.
+
+Thanks [@gokhanayhan38](https://github.com/gokhanayhan38) for his help.
+
 API Reference
 -------------
+
 ### General
 * All endpoints use `GET` method.
 * When a request is successful, response will be `200 OK` with `application/json` as `Content-Type` and the requested data in body.
