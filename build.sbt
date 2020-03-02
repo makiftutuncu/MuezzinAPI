@@ -1,35 +1,28 @@
-name := """MuezzinAPI"""
+// === Project Definition ===
 
-version := "2.4.1"
+description          in ThisBuild := "A web server application for Islamic prayer times"
+homepage             in ThisBuild := Some(url("https://github.com/makiftutuncu/MuezzinAPI"))
+startYear            in ThisBuild := Some(2020)
+licenses             in ThisBuild := Seq("MIT" -> url("https://opensource.org/licenses/MIT"))
+organization         in ThisBuild := "dev.akif"
+organizationName     in ThisBuild := "Mehmet Akif Tütüncü"
+organizationHomepage in ThisBuild := Some(url("https://akif.dev"))
+developers           in ThisBuild := List(Developer("makiftutuncu", "Mehmet Akif Tütüncü", "m.akif.tutuncu@gmail.com", url("https://akif.dev")))
+scmInfo              in ThisBuild := Some(ScmInfo(url("https://github.com/makiftutuncu/MuezzinAPI"), "git@github.com:makiftutuncu/MuezzinAPI.git"))
+version              in ThisBuild := "3.0.0-SNAPSHOT"
 
-lazy val root = (project in file(".")).enablePlugins(PlayScala, ElasticBeanstalkPlugin)
+// === Modules ===
 
-scalaVersion := "2.12.4"
-
-libraryDependencies ++= Seq(
-  ehcache,
-  guice,
-  ws,
-  "com.google.firebase"           % "firebase-admin" % "5.9.0",
-  "com.github.mehmetakiftutuncu" %% "errors"         % "1.2",
-  "com.typesafe.akka"            %% "akka-actor"     % "2.5.11",
-  "org.jsoup"                     % "jsoup"          % "1.11.2",
-  "org.specs2"                   %% "specs2-core"    % "4.0.2" % Test,
-  "org.specs2"                   %% "specs2-junit"   % "4.0.2" % Test
-)
-
-resolvers += Resolver.sbtPluginRepo("releases")
-
-routesImport += "com.mehmetakiftutuncu.muezzinapi.utilities.OptionIntPathBindable._"
-
-scalacOptions in Test ++= Seq("-Yrangepos")
-
-packageName in ElasticBeanstalk := "muezzin-api"
-elasticBeanstalkSources in ElasticBeanstalk := Seq(
-  baseDirectory.value / "Dockerrun.aws.json"
-)
-dockerLabels := Map(
- "maintainer" -> "Mehmet Akif Tütüncü <m.akif.tutuncu@gmail.com>"
-)
-dockerExposedPorts := Seq(9000)
-dockerBaseImage := "java:latest"
+lazy val `muezzin-api` = project
+  .in(file("."))
+  .settings(Settings.scalaSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      Dependencies.circeCore,
+      Dependencies.circeParser,
+      Dependencies.durum,
+      Dependencies.eCirce,
+      Dependencies.eZio,
+      Dependencies.zio
+    )
+  )
