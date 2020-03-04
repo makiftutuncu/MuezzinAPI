@@ -18,11 +18,15 @@ lazy val `muezzin-api` = project
   .settings(Settings.scalaSettings)
   .settings(
     libraryDependencies ++= Seq(
+      Dependencies.akkaHttp,
+      Dependencies.akkaStream,
       Dependencies.circeCore,
       Dependencies.circeParser,
       Dependencies.durum,
+      Dependencies.eScala,
       Dependencies.eCirce,
       Dependencies.eZio,
-      Dependencies.zio
+      Dependencies.zio,
+      Dependencies.scalaTest
     )
   )
