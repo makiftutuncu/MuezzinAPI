@@ -38,12 +38,12 @@ class CountryFetcherService @Inject()(Conf: AbstractConf, WS: AbstractWS) extend
 
           if (status != Status.OK) {
             val errors: Errors = Errors(CommonError.requestFailed.reason("Diyanet returned invalid status.").data(status.toString))
-            Log.error(s"$log Status '$status', content type '$contentType', body: ${wsResponse.body}", errors)
+            Log.error(s"$log Status '$status', content type '$contentType'", errors)
 
             Maybe(errors)
           } else if (!contentType.contains(MimeTypes.HTML)) {
             val errors: Errors = Errors(CommonError.requestFailed.reason("Diyanet returned invalid content type.").data(contentType))
-            Log.error(s"$log Status '$status', content type '$contentType', body: ${wsResponse.body}", errors)
+            Log.error(s"$log Status '$status', content type '$contentType'", errors)
 
             Maybe(errors)
           } else {

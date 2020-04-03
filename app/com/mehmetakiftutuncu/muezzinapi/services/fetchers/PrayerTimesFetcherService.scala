@@ -42,7 +42,7 @@ class PrayerTimesFetcherService @Inject()(Conf: AbstractConf, DateFormatter: Dat
 
           if (status != Status.OK) {
             val errors: Errors = Errors(CommonError.requestFailed.reason("Diyanet returned invalid status.").data(status.toString))
-            Log.error(s"$log Status '$status', content type '$contentType', body: ${wsResponse.body}", errors)
+            Log.error(s"$log Status '$status', content type '$contentType'", errors)
 
             Maybe(errors)
           } else if (!contentType.contains(MimeTypes.HTML)) {
@@ -100,7 +100,7 @@ class PrayerTimesFetcherService @Inject()(Conf: AbstractConf, DateFormatter: Dat
     } catch {
       case NonFatal(t: Throwable) =>
         val errors: Errors = Errors(CommonError("parseFailed").reason(t.getMessage))
-        Log.error(s"$log Page: $page", errors)
+        Log.error(s"$log", errors)
 
         Maybe(errors)
     }
